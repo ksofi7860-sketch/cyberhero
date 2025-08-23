@@ -1,5 +1,12 @@
 // ===== js/firebase-config.js (COMPLETE WORKING VERSION) =====
+const originalLog = console.log;
+const ENABLE_LOGS = false; // Set to false to suppress logs
 
+console.log = function(...args) {
+    if (ENABLE_LOGS) {
+        originalLog.apply(console, args);
+    }
+};
 // Firebase Configuration
 const firebaseConfig = {
   apiKey: "AIzaSyB_U2oT1LJJJgnsle-hV6_dnliMBPtJuaE",

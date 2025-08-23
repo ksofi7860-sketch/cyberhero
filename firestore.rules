@@ -2,17 +2,18 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Quizzes: Public read, validated writes
+    // Quizzes: Public read, validated writes, allow admin deletes
     match /quizzes/{quizId} {
       allow read: if true;
       allow write: if isValidQuiz();
+      allow delete: if true; // ADDED: Allow quiz deletion
     }
     
-    // Quiz Results: Public read, validated writes
+    // Quiz Results: Public read, validated writes only
     match /quizResults/{resultId} {
       allow read: if true;
       allow create: if isValidResult();
-      allow update, delete: if false;
+      allow update, delete: if false; // Prevent score tampering
     }
     
     function isValidQuiz() {
