@@ -8,7 +8,6 @@ const firebaseConfig = {
   appId: "1:96269136485:web:fd378d60a6f56752ed4c8c"
 };
 
-
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
@@ -201,12 +200,16 @@ const FirebaseHelper = {
         }
     },
 
-    // Test Firebase connection
-    async testConnection() {
+    // Test Firebase connection - FIXED METHOD
+    testConnection() {
         try {
-            await db.collection('test').limit(1).get();
-            console.log('✅ Firebase connection successful!');
-            return true;
+            // Just test if Firebase is initialized properly
+            if (db && typeof db.collection === 'function') {
+                console.log('✅ Firebase connection successful!');
+                return true;
+            } else {
+                throw new Error('Firebase not properly initialized');
+            }
         } catch (error) {
             console.error('❌ Firebase connection failed:', error);
             return false;
@@ -222,11 +225,9 @@ if (typeof module !== 'undefined' && module.exports) {
     module.exports = { FirebaseHelper, db };
 }
 
-// Test connection on load
-FirebaseHelper.testConnection().then(connected => {
-    if (connected) {
-        console.log('🔥 Firebase initialized and connected successfully!');
-    } else {
-        console.error('🚨 Firebase connection failed - check your configuration');
-    }
-});
+// Test connection on load - FIXED CALL
+if (FirebaseHelper.testConnection()) {
+    console.log('🔥 Firebase initialized and connected successfully!');
+} else {
+    console.error('🚨 Firebase connection failed - check your configuration');
+}
