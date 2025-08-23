@@ -1,33 +1,4 @@
-// Add password reset toggle functionality
-document.addEventListener('DOMContentLoaded', () => {
-    // ... your existing admin.js code ...
-
-    // Password reset toggle
-    const changePasswordToggle = document.getElementById('change-password-toggle');
-    const passwordResetSection = document.getElementById('password-reset-section');
-    const cancelPasswordReset = document.getElementById('cancel-password-reset');
-
-    if (changePasswordToggle) {
-        changePasswordToggle.addEventListener('click', () => {
-            passwordResetSection.classList.toggle('hidden');
-        });
-    }
-
-    if (cancelPasswordReset) {
-        cancelPasswordReset.addEventListener('click', () => {
-            passwordResetSection.classList.add('hidden');
-            // Clear form
-            document.getElementById('current-password').value = '';
-            document.getElementById('new-password').value = '';
-            document.getElementById('confirm-password').value = '';
-            document.getElementById('password-message').textContent = '';
-        });
-    }
-
-    // ... rest of your existing admin.js code ...
-});
-
-
+// ===== js/admin.js (UPDATED VERSION) =====
 document.addEventListener('DOMContentLoaded', async () => {
     const createQuizForm = document.getElementById('create-quiz-form');
     const questionsContainer = document.getElementById('questions-container');
@@ -43,9 +14,158 @@ document.addEventListener('DOMContentLoaded', async () => {
     const quizzesList = document.getElementById('quizzes-list');
     const resetLeaderboardBtn = document.getElementById('reset-leaderboard-btn');
     
+    // Password reset elements
+    const changePasswordToggle = document.getElementById('change-password-toggle');
+    const passwordResetSection = document.getElementById('password-reset-section');
+    const cancelPasswordReset = document.getElementById('cancel-password-reset');
+    
     let questionCount = 0;
     let editingQuizId = null;
     let allQuizzes = [];
+
+    // Enhanced Data Helper with seamless Firebase/localStorage integration
+    const DataHelper = {
+        // Save quiz with automatic fallback
+        async saveQuiz(quiz) {
+            console.log('💾 Attempting to save quiz:', quiz.title);
+            
+            try {
+                // Try Firebase first
+                if (window.FirebaseHelper && typeof window.FirebaseHelper.saveQuiz === 'function') {
+                    await window.FirebaseHelper.saveQuiz(quiz);
+                    console.log('✅ Quiz saved to Firebase successfully');
+                    return { success: true, method: 'firebase' };
+                }
+            } catch (error) {
+                console.log('⚠️ Firebase save failed, using localStorage backup');
+            }
+            
+            // Use localStorage backup
+            return this.saveQuizLocal(quiz);
+        },
+
+        saveQuizLocal(quiz) {
+            try {
+                const quizzes = JSON.parse(localStorage.getItem('cyberHeroQuizzes') || '[]');
+                quiz.id = quiz.id || Date.now().toString();
+                quiz.createdAt = quiz.createdAt || new Date().toISOString();
+                quiz.createdBy = 'admin';
+                
+                // Update existing or add new
+                const existingIndex = quizzes.findIndex(q => q.id === quiz.id);
+                if (existingIndex >= 0) {
+                    quizzes[existingIndex] = quiz;
+                } else {
+                    quizzes.push(quiz);
+                }
+                
+                localStorage.setItem('cyberHeroQuizzes', JSON.stringify(quizzes));
+                console.log('✅ Quiz saved to localStorage successfully');
+                return { success: true, method: 'localStorage' };
+            } catch (error) {
+                console.error('❌ Failed to save quiz locally:', error);
+                return { success: false, error: error.message };
+            }
+        },
+
+        // Get all quizzes with automatic fallback
+        async getQuizzes() {
+            console.log('📊 Loading quizzes...');
+            
+            try {
+                // Try Firebase first
+                if (window.FirebaseHelper && typeof window.FirebaseHelper.getQuizzes === 'function') {
+                    const firebaseQuizzes = await window.FirebaseHelper.getQuizzes();
+                    if (firebaseQuizzes && firebaseQuizzes.length > 0) {
+                        console.log('✅ Loaded', firebaseQuizzes.length, 'quizzes from Firebase');
+                        return firebaseQuizzes;
+                    }
+                }
+            } catch (error) {
+                console.log('⚠️ Firebase load failed, using localStorage');
+            }
+            
+            // Use localStorage
+            const localQuizzes = JSON.parse(localStorage.getItem('cyberHeroQuizzes') || '[]');
+            console.log('✅ Loaded', localQuizzes.length, 'quizzes from localStorage');
+            return localQuizzes;
+        },
+
+        // Delete quiz
+        async deleteQuiz(quizId) {
+            try {
+                // Try Firebase first
+                if (window.FirebaseHelper && typeof window.FirebaseHelper.deleteQuiz === 'function') {
+                    await window.FirebaseHelper.deleteQuiz(quizId);
+                    console.log('✅ Quiz deleted from Firebase');
+                }
+            } catch (error) {
+                console.log('⚠️ Firebase delete failed');
+            }
+            
+            // Always delete from localStorage too
+            const quizzes = JSON.parse(localStorage.getItem('cyberHeroQuizzes') || '[]');
+            const updatedQuizzes = quizzes.filter(q => q.id !== quizId);
+            localStorage.setItem('cyberHeroQuizzes', JSON.stringify(updatedQuizzes));
+            console.log('✅ Quiz deleted from localStorage');
+        },
+
+        // Get quiz results
+        async getQuizResults() {
+            try {
+                // Try Firebase first
+                if (window.FirebaseHelper && typeof window.FirebaseHelper.getQuizResults === 'function') {
+                    const firebaseResults = await window.FirebaseHelper.getQuizResults();
+                    if (firebaseResults && firebaseResults.length > 0) {
+                        console.log('✅ Loaded results from Firebase');
+                        return firebaseResults;
+                    }
+                }
+            } catch (error) {
+                console.log('⚠️ Firebase results load failed');
+            }
+            
+            // Use localStorage
+            const localResults = JSON.parse(localStorage.getItem('cyberHeroResults') || '[]');
+            console.log('✅ Loaded results from localStorage');
+            return localResults;
+        },
+
+        // Clear all results
+        async clearAllResults() {
+            try {
+                // Try Firebase first
+                if (window.FirebaseHelper && typeof window.FirebaseHelper.clearAllResults === 'function') {
+                    await window.FirebaseHelper.clearAllResults();
+                    console.log('✅ Firebase results cleared');
+                }
+            } catch (error) {
+                console.log('⚠️ Firebase clear failed');
+            }
+            
+            // Clear localStorage
+            localStorage.removeItem('cyberHeroResults');
+            console.log('✅ localStorage results cleared');
+            return true;
+        }
+    };
+
+    // Password reset functionality
+    if (changePasswordToggle) {
+        changePasswordToggle.addEventListener('click', () => {
+            passwordResetSection.classList.toggle('hidden');
+        });
+    }
+
+    if (cancelPasswordReset) {
+        cancelPasswordReset.addEventListener('click', () => {
+            passwordResetSection.classList.add('hidden');
+            document.getElementById('current-password').value = '';
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-password').value = '';
+            document.getElementById('password-message').textContent = '';
+        });
+    }
 
     // Load initial data
     await loadQuizzesList();
@@ -54,21 +174,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Reset leaderboard functionality
     resetLeaderboardBtn.addEventListener('click', async () => {
         if (confirm('⚠️ Are you sure you want to delete ALL leaderboard data? This cannot be undone!')) {
-            if (confirm('This will remove all user scores permanently from the database. Continue?')) {
+            if (confirm('This will remove all user scores permanently. Continue?')) {
                 try {
                     resetLeaderboardBtn.disabled = true;
                     resetLeaderboardBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Clearing...';
                     
-                    const success = await FirebaseHelper.clearAllResults();
+                    await DataHelper.clearAllResults();
+                    alert('✅ Leaderboard data has been cleared successfully!');
                     
-                    if (success) {
-                        alert('✅ Leaderboard data has been cleared successfully!');
-                        // Clear results display if visible
-                        if (!viewResultsSection.classList.contains('hidden')) {
-                            resultsDisplay.innerHTML = '<p>No results found.</p>';
-                        }
-                    } else {
-                        alert('❌ Error clearing leaderboard data. Please try again.');
+                    if (!viewResultsSection.classList.contains('hidden')) {
+                        resultsDisplay.innerHTML = '<p>No results found.</p>';
                     }
                 } catch (error) {
                     console.error('Error clearing leaderboard:', error);
@@ -82,17 +197,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Tab switching
-    createQuizTab.addEventListener('click', () => {
-        showCreateQuizSection();
-    });
-
-    manageQuizzesTab.addEventListener('click', () => {
-        showManageQuizzesSection();
-    });
-
-    viewResultsTab.addEventListener('click', () => {
-        showViewResultsSection();
-    });
+    createQuizTab.addEventListener('click', () => showCreateQuizSection());
+    manageQuizzesTab.addEventListener('click', () => showManageQuizzesSection());
+    viewResultsTab.addEventListener('click', () => showViewResultsSection());
 
     function showCreateQuizSection() {
         createQuizSection.classList.remove('hidden');
@@ -147,12 +254,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="option-row">
                     <input type="radio" name="correct-${questionCount}" value="2" class="correct-radio">
                     <input type="text" placeholder="Option 3" class="option-text" required>
-                    <label>✓ Correct Answer</label>
                 </div>
                 <div class="option-row">
                     <input type="radio" name="correct-${questionCount}" value="3" class="correct-radio">
                     <input type="text" placeholder="Option 4" class="option-text" required>
-                    <label>✓ Correct Answer</label>
                 </div>
             </div>
             <button type="button" class="remove-question-btn">Remove Question</button>
@@ -167,6 +272,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    // Enhanced form submission
     createQuizForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -178,9 +284,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
             
             const title = document.getElementById('quiz-title').value;
-            const thumbnail = document.getElementById('quiz-thumbnail').value;
+            const thumbnail = document.getElementById('quiz-thumbnail').value || 'https://via.placeholder.com/300x200?text=Quiz';
             const questions = [];
 
+            // Validate and collect questions
             document.querySelectorAll('.question-block').forEach(block => {
                 const questionText = block.querySelector('.question-text').value;
                 const options = Array.from(block.querySelectorAll('.option-text')).map(input => input.value);
@@ -202,43 +309,51 @@ document.addEventListener('DOMContentLoaded', async () => {
                 throw new Error('Please add at least one question.');
             }
 
-            const quizData = { title, thumbnail, questions };
+            const quizData = { 
+                title: title.trim(), 
+                thumbnail, 
+                questions,
+                id: editingQuizId || Date.now().toString()
+            };
 
-            if (editingQuizId) {
-                await FirebaseHelper.updateQuiz(editingQuizId, quizData);
-                alert('Quiz updated successfully!');
+            // Save quiz
+            const result = await DataHelper.saveQuiz(quizData);
+            
+            if (result.success) {
+                const method = result.method === 'firebase' ? 'Firebase' : 'locally';
+                alert(`✅ Quiz ${editingQuizId ? 'updated' : 'saved'} successfully (${method})!`);
+                
+                // Reset form
+                createQuizForm.reset();
+                questionsContainer.innerHTML = '';
+                questionCount = 0;
                 editingQuizId = null;
+                
+                // Refresh lists
+                await loadQuizzesList();
+                await loadQuizSelector();
             } else {
-                await FirebaseHelper.saveQuiz(quizData);
-                alert('Quiz saved successfully!');
+                throw new Error(result.error || 'Failed to save quiz');
             }
-            
-            createQuizForm.reset();
-            questionsContainer.innerHTML = '';
-            questionCount = 0;
-            
-            // Refresh quiz lists
-            await loadQuizzesList();
-            await loadQuizSelector();
             
         } catch (error) {
             console.error('Error saving quiz:', error);
-            alert(error.message || 'Error saving quiz. Please try again.');
+            alert(`❌ ${error.message}`);
         } finally {
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalText;
         }
     });
 
-    // Manage Quizzes functionality
+    // Load quizzes list
     async function loadQuizzesList() {
         try {
             quizzesList.innerHTML = '<div class="loading">Loading quizzes...</div>';
             
-            allQuizzes = await FirebaseHelper.getQuizzes();
+            allQuizzes = await DataHelper.getQuizzes();
             
             if (allQuizzes.length === 0) {
-                quizzesList.innerHTML = '<p>No quizzes created yet.</p>';
+                quizzesList.innerHTML = '<p>No quizzes created yet. Create your first cybersecurity quiz!</p>';
                 return;
             }
 
@@ -250,7 +365,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div class="quiz-info">
                             <div>
                                 <h3>${quiz.title}</h3>
-                                <p>Questions: ${quiz.questions.length}</p>
+                                <p>Questions: ${quiz.questions?.length || 0}</p>
+                                <p><small>Created: ${quiz.createdAt ? new Date(quiz.createdAt).toLocaleDateString() : 'Unknown'}</small></p>
                             </div>
                             <div class="quiz-actions">
                                 <button class="edit-btn" data-quiz-id="${quiz.id}">Edit</button>
@@ -268,6 +384,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // Quiz management event handlers
     quizzesList.addEventListener('click', async (e) => {
         if (e.target.classList.contains('edit-btn')) {
             const quizId = e.target.getAttribute('data-quiz-id');
@@ -286,7 +403,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         // Fill form with quiz data
         document.getElementById('quiz-title').value = quiz.title;
-        document.getElementById('quiz-thumbnail').value = quiz.thumbnail;
+        document.getElementById('quiz-thumbnail').value = quiz.thumbnail || '';
         
         // Clear existing questions
         questionsContainer.innerHTML = '';
@@ -305,22 +422,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="option-group">
                     <div class="option-row">
                         <input type="radio" name="correct-${questionCount}" value="0" class="correct-radio" ${question.answer === 0 ? 'checked' : ''}>
-                        <input type="text" placeholder="Option 1" class="option-text" required value="${question.options[0]}">
+                        <input type="text" placeholder="Option 1" class="option-text" required value="${question.options[0] || ''}">
                         <label>✓ Correct Answer</label>
                     </div>
                     <div class="option-row">
                         <input type="radio" name="correct-${questionCount}" value="1" class="correct-radio" ${question.answer === 1 ? 'checked' : ''}>
-                        <input type="text" placeholder="Option 2" class="option-text" required value="${question.options[1]}">
+                        <input type="text" placeholder="Option 2" class="option-text" required value="${question.options[1] || ''}">
                         <label>✓ Correct Answer</label>
                     </div>
                     <div class="option-row">
                         <input type="radio" name="correct-${questionCount}" value="2" class="correct-radio" ${question.answer === 2 ? 'checked' : ''}>
-                        <input type="text" placeholder="Option 3" class="option-text" required value="${question.options[2]}">
+                        <input type="text" placeholder="Option 3" class="option-text" required value="${question.options[2] || ''}">
                         <label>✓ Correct Answer</label>
                     </div>
                     <div class="option-row">
                         <input type="radio" name="correct-${questionCount}" value="3" class="correct-radio" ${question.answer === 3 ? 'checked' : ''}>
-                        <input type="text" placeholder="Option 4" class="option-text" required value="${question.options[3]}">
+                        <input type="text" placeholder="Option 4" class="option-text" required value="${question.options[3] || ''}">
                         <label>✓ Correct Answer</label>
                     </div>
                 </div>
@@ -336,21 +453,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function deleteQuiz(quizId) {
         if (confirm('Are you sure you want to delete this quiz?')) {
             try {
-                await FirebaseHelper.deleteQuiz(quizId);
-                alert('Quiz deleted successfully!');
+                await DataHelper.deleteQuiz(quizId);
+                alert('✅ Quiz deleted successfully!');
                 await loadQuizzesList();
                 await loadQuizSelector();
             } catch (error) {
                 console.error('Error deleting quiz:', error);
-                alert('Error deleting quiz. Please try again.');
+                alert('❌ Error deleting quiz. Please try again.');
             }
         }
     }
 
-    // View Results functionality
+    // Load quiz selector for results
     async function loadQuizSelector() {
         try {
-            const quizzes = await FirebaseHelper.getQuizzes();
+            const quizzes = await DataHelper.getQuizzes();
             quizSelect.innerHTML = '<option value="">Select a quiz to view results</option>';
             
             quizzes.forEach((quiz) => {
@@ -364,6 +481,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // Display results
     quizSelect.addEventListener('change', async (e) => {
         const selectedQuizId = e.target.value;
         if (selectedQuizId !== '') {
@@ -377,24 +495,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             resultsDisplay.innerHTML = '<div class="loading">Loading results...</div>';
             
-            const allResults = await FirebaseHelper.getQuizResults();
+            const allResults = await DataHelper.getQuizResults();
             const quizResults = allResults.filter(result => result.quizId === quizId);
             
             if (quizResults.length === 0) {
-                resultsDisplay.innerHTML = '<p>No results found for this quiz.</p>';
+                resultsDisplay.innerHTML = '<p>No results found for this quiz yet.</p>';
                 return;
             }
 
             // Sort by score (highest first)
-            quizResults.sort((a, b) => b.percentage - a.percentage);
+            quizResults.sort((a, b) => (b.percentage || 0) - (a.percentage || 0));
+
+            const selectedQuiz = allQuizzes.find(q => q.id === quizId);
+            const quizTitle = selectedQuiz ? selectedQuiz.title : 'Unknown Quiz';
+            const averageScore = Math.round(quizResults.reduce((sum, result) => sum + (result.percentage || 0), 0) / quizResults.length);
 
             let html = `
-                <h3>Results for: ${quizResults[0].quizTitle}</h3>
-                <p><strong>Total attempts:</strong> ${quizResults.length}</p>
-                <p><strong>Average score:</strong> ${Math.round(quizResults.reduce((sum, result) => sum + result.percentage, 0) / quizResults.length)}%</p>
+                <h3>📊 Results for: ${quizTitle}</h3>
+                <div class="results-stats">
+                    <p><strong>Total attempts:</strong> ${quizResults.length}</p>
+                    <p><strong>Average score:</strong> ${averageScore}%</p>
+                </div>
                 <table class="results-table">
                     <thead>
                         <tr>
+                            <th>Rank</th>
                             <th>Name</th>
                             <th>Score</th>
                             <th>Percentage</th>
@@ -404,10 +529,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <tbody>
             `;
 
-            quizResults.forEach(result => {
-                const date = result.timestamp ? new Date(result.timestamp).toLocaleDateString() : 'Unknown';
+            quizResults.forEach((result, index) => {
+                const date = result.completedAt || result.timestamp ? 
+                    new Date(result.completedAt || result.timestamp).toLocaleDateString() : 
+                    'Unknown';
+                const rank = index + 1;
+                const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
+                
                 html += `
                     <tr>
+                        <td>${medal}</td>
                         <td>${result.userName}</td>
                         <td>${result.score}/${result.totalQuestions}</td>
                         <td>${result.percentage}%</td>
@@ -423,35 +554,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             resultsDisplay.innerHTML = '<p class="error">Error loading results. Please refresh and try again.</p>';
         }
     }
-});
-// Backup quiz saving function
-function saveQuizLocal(quiz) {
-    try {
-        const quizzes = JSON.parse(localStorage.getItem('cyberHeroQuizzes') || '[]');
-        quiz.id = Date.now().toString();
-        quiz.createdAt = new Date().toISOString();
-        quiz.createdBy = 'admin';
-        quizzes.push(quiz);
-        localStorage.setItem('cyberHeroQuizzes', JSON.stringify(quizzes));
-        
-        // Update the quiz count display
-        document.getElementById('quiz-count').textContent = quizzes.length;
-        
-        alert('✅ Quiz saved successfully!');
-        console.log('Quiz saved locally:', quiz);
-        
-        // Clear the form
-        document.getElementById('quiz-form').reset();
-        document.getElementById('questions-container').innerHTML = '';
-        
-    } catch (error) {
-        console.error('Failed to save quiz:', error);
-        alert('❌ Failed to save quiz');
-    }
-}
 
-// Replace your existing saveQuiz call with this
-// In your form submission handler, change:
-// FirebaseHelper.saveQuiz(quizData)
-// to:
-// saveQuizLocal(quizData)
+    console.log('🎯 Admin panel initialized successfully!');
+});
