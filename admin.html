@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    
+ <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self' https:;
+    script-src 'self' 'unsafe-inline' https://www.gstatic.com https://cdnjs.cloudflare.com https://www.googleapis.com;
+    style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com;
+    font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com;
+    img-src 'self' data: https:;
+    connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://firestore.googleapis.com;
+    frame-src 'self';
+    object-src 'none';
+    base-uri 'self';
+">
+
+    
+    <!-- Font Awesome and other CDN resources -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Firebase CDN Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <!-- Your CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <header>
+        <div class="header-container">
+            <div class="logo-container">
+                <a href="index.html">
+                    <img src="images/logo.png" alt="I am Cyber Hero Logo" class="logo">
+                </a>
+            </div>
+            <div class="title-container">
+                <a href="index.html" class="title-link">
+                    <h1>Admin Dashboard</h1>
+                    <p class="tagline">Manage Your Cyber Hero Quizzes</p>
+                </a>
+            </div>
+            <div class="header-spacer">
+                <button onclick="adminLogout()" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Admin Actions Section -->
+    <div class="admin-actions">
+        <div class="admin-buttons">
+            <button id="reset-leaderboard-btn" class="danger-btn">
+                <i class="fas fa-trash"></i> Reset Leaderboard Data
+            </button>
+            <button id="change-password-toggle" class="security-btn">
+                <i class="fas fa-key"></i> Change Password
+            </button>
+        </div>
+        <div class="admin-info">
+            <p><i class="fas fa-shield-alt"></i> Secure Admin Portal</p>
+            
+        </div>
+    </div>
+
+    <!-- Password Reset Section -->
+<div id="password-reset-section" class="hidden">
+    <div class="password-reset-form">
+        <h3><i class="fas fa-key"></i> Change Admin Password</h3>
+        <div class="form-group">
+            <label for="current-password">Current Password:</label>
+            <input type="password" id="current-password" placeholder="Enter current password" required>
+        </div>
+        <div class="form-group">
+            <label for="new-password">New Password:</label>
+            <input type="password" id="new-password" placeholder="Enter new password" required>
+        </div>
+        <div class="form-group">
+            <label for="confirm-password">Confirm Password:</label>
+            <input type="password" id="confirm-password" placeholder="Confirm new password" required>
+        </div>
+        <div class="form-actions">
+            <button id="reset-password-btn" type="button" class="success-btn">
+                <i class="fas fa-save"></i> Update Password
+            </button>
+            <button id="cancel-password-reset" type="button" class="cancel-btn">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+        </div>
+        <div id="password-message" class="message"></div>
+    </div>
+</div>
+
+
+    <nav class="admin-nav">
+        <button id="create-quiz-tab" class="tab-btn active">Create Quiz</button>
+        <button id="manage-quizzes-tab" class="tab-btn">Manage Quizzes</button>
+        <button id="view-results-tab" class="tab-btn">View Results</button>
+    </nav>
+
+    <main>
+        <!-- Create Quiz Section -->
+        <div id="create-quiz-section">
+            <form id="create-quiz-form">
+                <h2>Create a New Quiz</h2>
+                <input type="text" id="quiz-title" placeholder="Quiz Title" required>
+                <input type="text" id="quiz-thumbnail" placeholder="Thumbnail Image URL" required>
+                
+                <div id="questions-container">
+                    <!-- Questions will be added here -->
+                </div>
+                
+                <button type="button" id="add-question-btn">Add Question</button>
+                <button type="submit">Save Quiz</button>
+            </form>
+        </div>
+
+        <!-- Manage Quizzes Section -->
+        <div id="manage-quizzes-section" class="hidden">
+            <h2>Manage Quizzes</h2>
+            <div id="quizzes-list">
+                <!-- Quizzes will be displayed here -->
+            </div>
+        </div>
+
+        <!-- View Results Section -->
+        <div id="view-results-section" class="hidden">
+            <h2>Quiz Results</h2>
+            <div id="quiz-selector">
+                <select id="quiz-select">
+                    <option value="">Select a quiz to view results</option>
+                </select>
+            </div>
+            <div id="results-display">
+                <!-- Results will be displayed here -->
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-left">
+                <p>&copy; 2025 I am Cyber Hero. All rights reserved.</p>
+            </div>
+            <div class="footer-right">
+                <a href="https://www.instagram.com/your-instagram-profile" target="_blank" title="Follow us on Instagram">
+                    <i class="fab fa-instagram"></i>
+                </a>
+                <a href="https://www.youtube.com/your-youtube-channel" target="_blank" title="Subscribe on YouTube">
+                    <i class="fab fa-youtube"></i>
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/firebase-config.js"></script>
+
+<script src="js/auth.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>
