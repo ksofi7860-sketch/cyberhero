@@ -1,4 +1,12 @@
 // Complete Working Auth System
+const originalLog = console.log;
+const ENABLE_LOGS = false; // Set to false to suppress logs
+
+console.log = function(...args) {
+    if (ENABLE_LOGS) {
+        originalLog.apply(console, args);
+    }
+};
 (function() {
     const ADMIN_USERNAME = 'admin';
     const ADMIN_PASSWORD_KEY = 'adminPassword';
