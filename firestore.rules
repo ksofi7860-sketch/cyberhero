@@ -2,38 +2,32 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Quizzes: Public read only (secure)
+    // Quizzes: Public read, validated writes
     match /quizzes/{quizId} {
-      allow read: if true; // Anyone can read quizzes
-      allow write: if false; // NO public writes (secure)
+      allow read: if true;
+      allow write: if isValidQuiz();
     }
     
-    // Quiz Results: Public read, validated writes only
+    // Quiz Results: Public read, validated writes
     match /quizResults/{resultId} {
-      allow read: if true; // Public leaderboard
-      allow create: if validateResult() && rateLimitCheck();
-      allow update, delete: if false; // Prevent score manipulation
+      allow read: if true;
+      allow create: if isValidResult();
+      allow update, delete: if false;
     }
     
-    // No access to test collection in production
-    match /test/{testId} {
-      allow read, write: if false;
+    function isValidQuiz() {
+      return request.resource.data.title is string &&
+             request.resource.data.title.size() > 0 &&
+             request.resource.data.questions is list &&
+             request.resource.data.questions.size() > 0;
     }
     
-    // Strict validation functions
-    function validateResult() {
-      return request.resource.data.keys().hasAll(['userName', 'score', 'percentage']) &&
-             request.resource.data.userName is string &&
-             request.resource.data.userName.size() > 0 &&
+    function isValidResult() {
+      return request.resource.data.userName is string &&
              request.resource.data.userName.size() <= 50 &&
              request.resource.data.score is number &&
              request.resource.data.percentage >= 0 &&
              request.resource.data.percentage <= 100;
-    }
-    
-    function rateLimitCheck() {
-      // Basic rate limiting - prevent spam submissions
-      return request.time > resource.data.timestamp + duration.value(30, 's');
     }
   }
 }
