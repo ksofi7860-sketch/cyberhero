@@ -1,0 +1,39 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Quizzes: Public read only (secure)
+    match /quizzes/{quizId} {
+      allow read: if true; // Anyone can read quizzes
+      allow write: if false; // NO public writes (secure)
+    }
+    
+    // Quiz Results: Public read, validated writes only
+    match /quizResults/{resultId} {
+      allow read: if true; // Public leaderboard
+      allow create: if validateResult() && rateLimitCheck();
+      allow update, delete: if false; // Prevent score manipulation
+    }
+    
+    // No access to test collection in production
+    match /test/{testId} {
+      allow read, write: if false;
+    }
+    
+    // Strict validation functions
+    function validateResult() {
+      return request.resource.data.keys().hasAll(['userName', 'score', 'percentage']) &&
+             request.resource.data.userName is string &&
+             request.resource.data.userName.size() > 0 &&
+             request.resource.data.userName.size() <= 50 &&
+             request.resource.data.score is number &&
+             request.resource.data.percentage >= 0 &&
+             request.resource.data.percentage <= 100;
+    }
+    
+    function rateLimitCheck() {
+      // Basic rate limiting - prevent spam submissions
+      return request.time > resource.data.timestamp + duration.value(30, 's');
+    }
+  }
+}
