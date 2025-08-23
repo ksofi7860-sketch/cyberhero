@@ -214,3 +214,5 @@ window.addEventListener('load', function() {
         console.log('✅ Password reset ready!');
     }, 500); // 500ms delay to ensure DOM is fully ready
 });
+// In your admin login success section, add:
+firebase.auth().signInAnonymously().catch(console.error);

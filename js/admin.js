@@ -424,3 +424,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 });
+// Backup quiz saving function
+function saveQuizLocal(quiz) {
+    try {
+        const quizzes = JSON.parse(localStorage.getItem('cyberHeroQuizzes') || '[]');
+        quiz.id = Date.now().toString();
+        quiz.createdAt = new Date().toISOString();
+        quiz.createdBy = 'admin';
+        quizzes.push(quiz);
+        localStorage.setItem('cyberHeroQuizzes', JSON.stringify(quizzes));
+        
+        // Update the quiz count display
+        document.getElementById('quiz-count').textContent = quizzes.length;
+        
+        alert('✅ Quiz saved successfully!');
+        console.log('Quiz saved locally:', quiz);
+        
+        // Clear the form
+        document.getElementById('quiz-form').reset();
+        document.getElementById('questions-container').innerHTML = '';
+        
+    } catch (error) {
+        console.error('Failed to save quiz:', error);
+        alert('❌ Failed to save quiz');
+    }
+}
+
+// Replace your existing saveQuiz call with this
+// In your form submission handler, change:
+// FirebaseHelper.saveQuiz(quizData)
+// to:
+// saveQuizLocal(quizData)

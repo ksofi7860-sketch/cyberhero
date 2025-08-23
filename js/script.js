@@ -153,3 +153,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 });
+// Add to your main quiz loading script
+function loadQuizzesLocal() {
+    const quizzes = JSON.parse(localStorage.getItem('cyberHeroQuizzes') || '[]');
+    return quizzes;
+}
+
+// Use this instead of Firebase queries
+const quizzes = loadQuizzesLocal();
