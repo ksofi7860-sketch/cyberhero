@@ -1,17 +1,24 @@
-
+// ===== js/auth.js (COMPLETE WORKING VERSION) =====
 (function() {
     const ADMIN_USERNAME = 'admin';
     const ADMIN_PASSWORD_KEY = 'adminPassword';
-    // Remove: const DEFAULT_PASSWORD = 'CyberHero2025!';
     
-    // Initialize with secure default if not set
+    // Security settings - PROPERLY DECLARED
+    let loginAttempts = 0;
+    let lastAttemptTime = 0;
+    const MAX_ATTEMPTS = 3;
+    const LOCKOUT_TIME = 30000; // 30 seconds
+    const SESSION_TIMEOUT = 24 * 60 * 60 * 1000; // 24 hours
+
+    // Initialize secure password if not set
     if (!localStorage.getItem(ADMIN_PASSWORD_KEY)) {
-        // Generate a random password instead of hardcoding
         const secureDefault = 'CH' + Date.now().toString().slice(-6) + '!';
         localStorage.setItem(ADMIN_PASSWORD_KEY, secureDefault);
-        console.log('🔐 Secure default password generated');
+        alert('🔐 IMPORTANT: Default password generated!\n\nNew Password: ' + secureDefault + '\n\nChange this immediately in admin dashboard!');
+        console.log('🔐 Secure default password generated:', secureDefault);
     }
     
+    // Security logging function
     window.logSecurityEvent = function(event, data) {
         try {
             const logs = JSON.parse(localStorage.getItem('securityLogs') || '[]');
@@ -31,9 +38,12 @@
     };
     
     function checkAuth() {
+        console.log('🔐 Checking authentication...');
         if (!sessionStorage.getItem('adminLoggedIn')) {
+            console.log('❌ No admin session found, showing login prompt');
             showLoginPrompt();
         } else {
+            console.log('✅ Admin session found, checking timeout');
             checkSessionTimeout();
         }
     }
@@ -41,6 +51,7 @@
     function showLoginPrompt() {
         const now = Date.now();
         
+        // Check lockout
         if (loginAttempts >= MAX_ATTEMPTS) {
             const timeSinceLastAttempt = now - lastAttemptTime;
             if (timeSinceLastAttempt < LOCKOUT_TIME) {
@@ -53,13 +64,13 @@
             }
         }
         
-        const username = prompt('🔐 Admin Login\n\nEnter Username:');
+        const username = prompt('🔐 Cyber Hero Admin Login\n\nUsername:');
         if (username === null) {
             redirectToHome();
             return;
         }
         
-        const password = prompt('🔐 Admin Login\n\nEnter Password:');
+        const password = prompt('🔐 Cyber Hero Admin Login\n\nPassword:');
         if (password === null) {
             redirectToHome();
             return;
@@ -70,7 +81,8 @@
             sessionStorage.setItem('adminLoggedIn', 'true');
             sessionStorage.setItem('adminLoginTime', now.toString());
             logSecurityEvent('LOGIN_SUCCESS', { username: username, timestamp: now });
-            alert('✅ Welcome to Admin Dashboard!');
+            alert('✅ Welcome to Cyber Hero Admin Dashboard!');
+            console.log('✅ Admin login successful');
         } else {
             loginAttempts++;
             lastAttemptTime = now;
@@ -94,6 +106,11 @@
     
     function authenticateUser(username, password) {
         const storedPassword = localStorage.getItem(ADMIN_PASSWORD_KEY);
+        console.log('🔐 Authenticating user:', username);
+        if (!storedPassword) {
+            console.error('❌ No stored password found!');
+            return false;
+        }
         return username === ADMIN_USERNAME && password === storedPassword;
     }
     
@@ -113,6 +130,7 @@
     }
     
     function redirectToHome() {
+        console.log('🔄 Redirecting to home...');
         window.location.href = 'index.html';
     }
     
@@ -126,13 +144,17 @@
         }
     };
     
+    // CRITICAL: Check auth on admin pages - THIS IS THE KEY PART
     if (window.location.pathname.includes('admin.html')) {
+        console.log('🔐 Admin page detected, enforcing authentication...');
         checkAuth();
         setInterval(checkSessionTimeout, 5 * 60 * 1000);
     }
+    
+    console.log('🛡️ Security system initialized');
 })();
 
-// Enhanced Password Reset System - ADD THIS TO auth.js
+// Enhanced Password Reset System
 window.addEventListener('load', function() {
     console.log('🚀 Password reset loading...');
     
@@ -150,7 +172,7 @@ window.addEventListener('load', function() {
             };
         }
         
-        // WORKING Password Reset Handler
+        // Password Reset Handler - FIXED: No hardcoded fallback
         const resetBtn = document.getElementById('reset-password-btn');
         if (resetBtn) {
             resetBtn.onclick = function(e) {
@@ -161,15 +183,19 @@ window.addEventListener('load', function() {
                 const newPass = document.getElementById('new-password').value.trim();
                 const confirmPass = document.getElementById('confirm-password').value.trim();
                 
-                console.log('Values:', { currentPass: '***', newPass: '***', confirmPass: '***' });
-                
                 // Validation
                 if (!currentPass || !newPass || !confirmPass) {
                     alert('❌ All fields are required!');
                     return;
                 }
                 
-                const storedPassword = localStorage.getItem('adminPassword') || 'CyberHero2025!';
+                // FIXED: No hardcoded fallback
+                const storedPassword = localStorage.getItem('adminPassword');
+                if (!storedPassword) {
+                    alert('❌ No admin password found! Please contact administrator.');
+                    return;
+                }
+                
                 if (currentPass !== storedPassword) {
                     alert('❌ Current password is incorrect!');
                     return;
@@ -205,8 +231,6 @@ window.addEventListener('load', function() {
                 console.log('✅ Password changed successfully');
             };
             console.log('✅ Password reset handler attached');
-        } else {
-            console.error('❌ Reset button not found!');
         }
         
         // Cancel button handler
