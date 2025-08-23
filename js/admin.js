@@ -1,11 +1,4 @@
-const originalLog = console.log;
-const ENABLE_LOGS = false; // Set to false to suppress logs
 
-console.log = function(...args) {
-    if (ENABLE_LOGS) {
-        originalLog.apply(console, args);
-    }
-};
 // ===== js/admin.js (UPDATED VERSION) =====
 document.addEventListener('DOMContentLoaded', async () => {
     const createQuizForm = document.getElementById('create-quiz-form');
