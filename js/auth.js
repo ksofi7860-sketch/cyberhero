@@ -155,33 +155,64 @@
 })();
 
 // Enhanced Password Reset System
-window.addEventListener('load', function() {
-    console.log('🚀 Password reset loading...');
+// ===== WORKING PASSWORD RESET SYSTEM =====
+// Wait for DOM to be completely loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 DOM loaded, initializing password reset...');
     
+    // Wait a bit more to ensure everything is ready
     setTimeout(function() {
+        
         // Toggle password reset section
         const toggleBtn = document.getElementById('change-password-toggle');
         if (toggleBtn) {
-            toggleBtn.onclick = function(e) {
+            toggleBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 const section = document.getElementById('password-reset-section');
                 if (section) {
                     section.classList.toggle('hidden');
                     console.log('✅ Password reset section toggled');
+                    
+                    // Debug: Check if elements exist after showing section
+                    setTimeout(() => {
+                        console.log('Reset button exists:', !!document.getElementById('reset-password-btn'));
+                        console.log('Current password field exists:', !!document.getElementById('current-password'));
+                        console.log('New password field exists:', !!document.getElementById('new-password'));
+                        console.log('Confirm password field exists:', !!document.getElementById('confirm-password'));
+                    }, 100);
                 }
-            };
+            });
+            console.log('✅ Toggle button handler attached');
+        } else {
+            console.error('❌ Toggle button not found');
         }
         
-        // Password Reset Handler - FIXED: No hardcoded fallback
+        // Password Reset Handler
         const resetBtn = document.getElementById('reset-password-btn');
         if (resetBtn) {
-            resetBtn.onclick = function(e) {
+            resetBtn.addEventListener('click', function(e) {
                 e.preventDefault();
-                console.log('🔐 Password reset initiated');
+                console.log('🔐 Password reset button clicked!');
                 
-                const currentPass = document.getElementById('current-password').value.trim();
-                const newPass = document.getElementById('new-password').value.trim();
-                const confirmPass = document.getElementById('confirm-password').value.trim();
+                // Get form values
+                const currentPassField = document.getElementById('current-password');
+                const newPassField = document.getElementById('new-password');
+                const confirmPassField = document.getElementById('confirm-password');
+                const messageDiv = document.getElementById('password-message');
+                
+                if (!currentPassField || !newPassField || !confirmPassField) {
+                    alert('❌ Form fields not found! Please refresh the page.');
+                    return;
+                }
+                
+                const currentPass = currentPassField.value.trim();
+                const newPass = newPassField.value.trim();
+                const confirmPass = confirmPassField.value.trim();
+                
+                console.log('Form values retrieved successfully');
+                
+                // Clear previous messages
+                if (messageDiv) messageDiv.textContent = '';
                 
                 // Validation
                 if (!currentPass || !newPass || !confirmPass) {
@@ -189,7 +220,7 @@ window.addEventListener('load', function() {
                     return;
                 }
                 
-                // FIXED: No hardcoded fallback
+                // Get stored password
                 const storedPassword = localStorage.getItem('adminPassword');
                 if (!storedPassword) {
                     alert('❌ No admin password found! Please contact administrator.');
@@ -198,16 +229,19 @@ window.addEventListener('load', function() {
                 
                 if (currentPass !== storedPassword) {
                     alert('❌ Current password is incorrect!');
+                    if (messageDiv) messageDiv.textContent = 'Current password is incorrect';
                     return;
                 }
                 
                 if (newPass !== confirmPass) {
                     alert('❌ New passwords do not match!');
+                    if (messageDiv) messageDiv.textContent = 'New passwords do not match';
                     return;
                 }
                 
                 if (newPass.length < 8) {
                     alert('❌ Password must be at least 8 characters!');
+                    if (messageDiv) messageDiv.textContent = 'Password must be at least 8 characters';
                     return;
                 }
                 
@@ -222,29 +256,59 @@ window.addEventListener('load', function() {
                     });
                 }
                 
+                // Show success message
+                if (messageDiv) {
+                    messageDiv.textContent = '✅ Password updated successfully!';
+                    messageDiv.style.color = 'green';
+                }
+                
                 // Clear and hide form
-                document.getElementById('current-password').value = '';
-                document.getElementById('new-password').value = '';
-                document.getElementById('confirm-password').value = '';
-                document.getElementById('password-reset-section').classList.add('hidden');
+                currentPassField.value = '';
+                newPassField.value = '';
+                confirmPassField.value = '';
+                
+                setTimeout(() => {
+                    document.getElementById('password-reset-section').classList.add('hidden');
+                    if (messageDiv) messageDiv.textContent = '';
+                }, 2000);
                 
                 console.log('✅ Password changed successfully');
-            };
+            });
             console.log('✅ Password reset handler attached');
+        } else {
+            console.error('❌ Reset button not found');
         }
         
         // Cancel button handler
         const cancelBtn = document.getElementById('cancel-password-reset');
         if (cancelBtn) {
-            cancelBtn.onclick = function(e) {
+            cancelBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 document.getElementById('password-reset-section').classList.add('hidden');
                 document.getElementById('current-password').value = '';
                 document.getElementById('new-password').value = '';
                 document.getElementById('confirm-password').value = '';
-            };
+                const messageDiv = document.getElementById('password-message');
+                if (messageDiv) messageDiv.textContent = '';
+            });
+            console.log('✅ Cancel button handler attached');
         }
         
-        console.log('✅ Password reset system ready!');
+        console.log('✅ Password reset system fully initialized!');
+        
+    }, 1000); // Wait 1 second for everything to load
+});
+
+// Also attach on window load as backup
+window.addEventListener('load', function() {
+    console.log('🚀 Window loaded - backup initialization');
+    
+    // If elements still don't exist, force initialize
+    setTimeout(() => {
+        if (!document.getElementById('reset-password-btn')?.onclick) {
+            console.log('🔄 Backup: Re-initializing password reset...');
+            // Trigger the same initialization
+            document.dispatchEvent(new Event('DOMContentLoaded'));
+        }
     }, 500);
 });
