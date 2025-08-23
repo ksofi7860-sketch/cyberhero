@@ -2,17 +2,14 @@
 (function() {
     const ADMIN_USERNAME = 'admin';
     const ADMIN_PASSWORD_KEY = 'adminPassword';
-    const DEFAULT_PASSWORD = 'TempSetup123!';
+    // Remove: const DEFAULT_PASSWORD = 'CyberHero2025!';
     
-    // Security settings
-    let loginAttempts = 0;
-    let lastAttemptTime = 0;
-    const MAX_ATTEMPTS = 3;
-    const LOCKOUT_TIME = 30000;
-    const SESSION_TIMEOUT = 24 * 60 * 60 * 1000;
-
+    // Initialize with secure default if not set
     if (!localStorage.getItem(ADMIN_PASSWORD_KEY)) {
-        localStorage.setItem(ADMIN_PASSWORD_KEY, DEFAULT_PASSWORD);
+        // Generate a random password instead of hardcoding
+        const secureDefault = 'CH' + Date.now().toString().slice(-6) + '!';
+        localStorage.setItem(ADMIN_PASSWORD_KEY, secureDefault);
+        console.log('🔐 Secure default password generated');
     }
     
     window.logSecurityEvent = function(event, data) {
@@ -135,14 +132,12 @@
     }
 })();
 
-// WORKING Password Reset - Waits for DOM then uses direct binding
+// Enhanced Password Reset System - ADD THIS TO auth.js
 window.addEventListener('load', function() {
     console.log('🚀 Password reset loading...');
     
-    // Wait a bit more to ensure everything is ready
     setTimeout(function() {
-        
-        // Toggle handler
+        // Toggle password reset section
         const toggleBtn = document.getElementById('change-password-toggle');
         if (toggleBtn) {
             toggleBtn.onclick = function(e) {
@@ -150,56 +145,71 @@ window.addEventListener('load', function() {
                 const section = document.getElementById('password-reset-section');
                 if (section) {
                     section.classList.toggle('hidden');
-                    console.log('Toggle worked!');
+                    console.log('✅ Password reset section toggled');
                 }
             };
         }
         
-        // Reset button handler - DIRECT BINDING
+        // WORKING Password Reset Handler
         const resetBtn = document.getElementById('reset-password-btn');
         if (resetBtn) {
             resetBtn.onclick = function(e) {
                 e.preventDefault();
-                console.log('🔥 RESET BUTTON CLICKED!');
+                console.log('🔐 Password reset initiated');
                 
-                const current = document.getElementById('current-password').value.trim();
+                const currentPass = document.getElementById('current-password').value.trim();
                 const newPass = document.getElementById('new-password').value.trim();
-                const confirm = document.getElementById('confirm-password').value.trim();
+                const confirmPass = document.getElementById('confirm-password').value.trim();
                 
-                if (!current || !newPass || !confirm) {
-                    alert('❌ All fields required!');
+                console.log('Values:', { currentPass: '***', newPass: '***', confirmPass: '***' });
+                
+                // Validation
+                if (!currentPass || !newPass || !confirmPass) {
+                    alert('❌ All fields are required!');
                     return;
                 }
                 
-                const stored = localStorage.getItem('adminPassword') || 'CyberHero2025!';
-                if (current !== stored) {
-                    alert('❌ Current password incorrect!');
+                const storedPassword = localStorage.getItem('adminPassword') || 'CyberHero2025!';
+                if (currentPass !== storedPassword) {
+                    alert('❌ Current password is incorrect!');
                     return;
                 }
                 
-                if (newPass !== confirm) {
-                    alert('❌ Passwords do not match!');
+                if (newPass !== confirmPass) {
+                    alert('❌ New passwords do not match!');
                     return;
                 }
                 
                 if (newPass.length < 8) {
-                    alert('❌ Password must be 8+ characters!');
+                    alert('❌ Password must be at least 8 characters!');
                     return;
                 }
                 
+                // Update password
                 localStorage.setItem('adminPassword', newPass);
-                alert('✅ Password updated successfully!');
+                alert('✅ Password updated successfully!\n\nNew password is now active.');
                 
-                // Clear and hide
+                // Log security event
+                if (window.logSecurityEvent) {
+                    window.logSecurityEvent('PASSWORD_CHANGED', { 
+                        timestamp: new Date().toISOString() 
+                    });
+                }
+                
+                // Clear and hide form
                 document.getElementById('current-password').value = '';
                 document.getElementById('new-password').value = '';
                 document.getElementById('confirm-password').value = '';
                 document.getElementById('password-reset-section').classList.add('hidden');
+                
+                console.log('✅ Password changed successfully');
             };
-            console.log('✅ Reset button handler attached');
+            console.log('✅ Password reset handler attached');
+        } else {
+            console.error('❌ Reset button not found!');
         }
         
-        // Cancel handler
+        // Cancel button handler
         const cancelBtn = document.getElementById('cancel-password-reset');
         if (cancelBtn) {
             cancelBtn.onclick = function(e) {
@@ -211,8 +221,6 @@ window.addEventListener('load', function() {
             };
         }
         
-        console.log('✅ Password reset ready!');
-    }, 500); // 500ms delay to ensure DOM is fully ready
+        console.log('✅ Password reset system ready!');
+    }, 500);
 });
-// In your admin login success section, add:
-firebase.auth().signInAnonymously().catch(console.error);
