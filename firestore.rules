@@ -6,16 +6,23 @@ service cloud.firestore {
     match /quizzes/{quizId} {
       allow read: if true;
       allow write: if isValidQuiz();
-      allow delete: if true; // ADDED: Allow quiz deletion
+      allow delete: if true;
     }
     
-    // Quiz Results: Public read, validated writes only
+    // Quiz Results: Public read, validated creates, admin can delete ALL
     match /quizResults/{resultId} {
       allow read: if true;
       allow create: if isValidResult();
-      allow update, delete: if false; // Prevent score tampering
+      allow update: if false; // Prevent score tampering
+      allow delete: if isAdminUser(); // FIXED: Allow admin to delete for leaderboard reset
     }
     
+    // Admin operations - allow full access for authenticated admin users
+    match /{document=**} {
+      allow read, write, delete: if isAdminUser();
+    }
+    
+    // FUNCTIONS
     function isValidQuiz() {
       return request.resource.data.title is string &&
              request.resource.data.title.size() > 0 &&
@@ -30,5 +37,16 @@ service cloud.firestore {
              request.resource.data.percentage >= 0 &&
              request.resource.data.percentage <= 100;
     }
+    
+    // ADMIN AUTHENTICATION - Add your admin email here
+    function isAdminUser() {
+      return request.auth != null && 
+             request.auth.token.email == 'khansifi7867860@gmail.com'; // REPLACE WITH YOUR EMAIL
+    }
+    
+    // Alternative: Allow deletion from any authenticated user (less secure but simpler)
+    // function isAdminUser() {
+    //   return request.auth != null;
+    // }
   }
 }
