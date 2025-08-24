@@ -1,5 +1,4 @@
-
-// ===== js/admin.js (UPDATED VERSION) =====
+// ===== js/admin.js (COMPLETE UPDATED VERSION WITH IMAGE/GIF SUPPORT) =====
 document.addEventListener('DOMContentLoaded', async () => {
     const createQuizForm = document.getElementById('create-quiz-form');
     const questionsContainer = document.getElementById('questions-container');
@@ -231,7 +230,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await loadQuizSelector();
     }
 
-    // Create Quiz functionality
+    // CREATE QUIZ FUNCTIONALITY WITH IMAGE/GIF SUPPORT
     addQuestionBtn.addEventListener('click', () => {
         questionCount++;
         const questionDiv = document.createElement('div');
@@ -240,6 +239,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             <hr>
             <h4>Question ${questionCount}</h4>
             <input type="text" placeholder="Question" class="question-text" required>
+            
+            <!-- NEW: Image/GIF input for each question -->
+            <div class="form-group">
+                <label>Question Media URL (Optional):</label>
+                <input type="url" class="question-image-url" placeholder="https://example.com/image.jpg or animated.gif">
+                <small>💡 Add JPG, PNG, or GIF to illustrate cybersecurity concepts</small>
+            </div>
             
             <div class="option-group">
                 <div class="option-row">
@@ -255,10 +261,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="option-row">
                     <input type="radio" name="correct-${questionCount}" value="2" class="correct-radio">
                     <input type="text" placeholder="Option 3" class="option-text" required>
+                    <label>✓ Correct Answer</label>
                 </div>
                 <div class="option-row">
                     <input type="radio" name="correct-${questionCount}" value="3" class="correct-radio">
                     <input type="text" placeholder="Option 4" class="option-text" required>
+                    <label>✓ Correct Answer</label>
                 </div>
             </div>
             <button type="button" class="remove-question-btn">Remove Question</button>
@@ -273,7 +281,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Enhanced form submission
+    // ENHANCED FORM SUBMISSION WITH IMAGE URL COLLECTION
     createQuizForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -288,10 +296,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             const thumbnail = document.getElementById('quiz-thumbnail').value || 'https://via.placeholder.com/300x200?text=Quiz';
             const questions = [];
 
-            // Validate and collect questions
+            // UPDATED: Validate and collect questions WITH IMAGE URLS
             document.querySelectorAll('.question-block').forEach(block => {
                 const questionText = block.querySelector('.question-text').value;
                 const options = Array.from(block.querySelectorAll('.option-text')).map(input => input.value);
+                
+                // COLLECT OPTIONAL IMAGE URL
+                const imageUrl = block.querySelector('.question-image-url')?.value?.trim() || null;
                 
                 const correctRadio = block.querySelector('input[type="radio"]:checked');
                 if (!correctRadio) {
@@ -301,6 +312,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 questions.push({
                     question: questionText,
+                    imageUrl: imageUrl, // INCLUDE IMAGE URL
                     options: options,
                     answer: correctAnswer
                 });
@@ -396,6 +408,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    // UPDATED EDIT QUIZ FUNCTION WITH IMAGE URL SUPPORT
     async function editQuiz(quizId) {
         const quiz = allQuizzes.find(q => q.id === quizId);
         if (!quiz) return;
@@ -410,7 +423,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         questionsContainer.innerHTML = '';
         questionCount = 0;
         
-        // Add questions to form
+        // Add questions to form WITH IMAGE URL SUPPORT
         quiz.questions.forEach((question) => {
             questionCount++;
             const questionDiv = document.createElement('div');
@@ -419,6 +432,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <hr>
                 <h4>Question ${questionCount}</h4>
                 <input type="text" placeholder="Question" class="question-text" required value="${question.question}">
+                
+                <!-- INCLUDE IMAGE URL INPUT WITH EXISTING VALUE -->
+                <div class="form-group">
+                    <label>Question Media URL (Optional):</label>
+                    <input type="url" class="question-image-url" placeholder="https://example.com/image.jpg or animated.gif" value="${question.imageUrl || ''}">
+                    <small>💡 Add JPG, PNG, or GIF to illustrate cybersecurity concepts</small>
+                </div>
                 
                 <div class="option-group">
                     <div class="option-row">
@@ -556,5 +576,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    console.log('🎯 Admin panel initialized successfully!');
+    console.log('🎯 Admin panel with image/GIF support initialized successfully!');
 });

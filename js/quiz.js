@@ -43,10 +43,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     function displayQuestion() {
         if (currentQuestionIndex < quiz.questions.length) {
             const question = quiz.questions[currentQuestionIndex];
-            quizContainer.innerHTML = `
+            
+            // BUILD HTML WITH IMAGE SUPPORT
+            let questionHTML = `
                 <div class="quiz-content">
                     <div class="question-counter">Question ${currentQuestionIndex + 1} of ${quiz.questions.length}</div>
                     <h2 class="question-title">${question.question}</h2>
+            `;
+            
+            // ADD IMAGE/GIF IF PROVIDED
+            if (question.imageUrl && question.imageUrl.trim() !== '') {
+                questionHTML += `
+                    <div class="question-image-container">
+                        <img id="question-image" src="${question.imageUrl}" alt="Question illustration" 
+                             style="max-width: 100%; max-height: 300px; border-radius: 12px; margin: 20px 0; display: block;"
+                             onerror="this.style.display='none';">
+                    </div>
+                `;
+            }
+            
+            // ADD OPTIONS
+            questionHTML += `
                     <div class="options-container">
                         ${question.options.map((option, index) => `
                             <div class="option-card" data-correct="${index === question.answer}">
@@ -56,6 +73,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                 </div>
             `;
+            
+            quizContainer.innerHTML = questionHTML;
         } else {
             showResult();
         }
@@ -97,21 +116,56 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         let message = '';
         let emoji = '';
+        let resultGif = '';
         
+        // ENHANCED RESULT WITH GIFS BASED ON SCORE
         if (percentage === 100) {
             message = `Hurray ${userName}! You are a Cyber Hero! 🦸‍♂️`;
             emoji = '🎉';
-        } else if (percentage < 50) {
-            message = `${userName}, try another time! 💪`;
-            emoji = '📚';
-        } else {
-            message = `Great job ${userName}! 🎊`;
+            const perfectGifs = [
+                'https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif',
+                'https://media.giphy.com/media/26u4cqiYI30juCOGY/giphy.gif',
+                'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif'
+            ];
+            resultGif = perfectGifs[Math.floor(Math.random() * perfectGifs.length)];
+        } else if (percentage >= 80) {
+            message = `Excellent work ${userName}! You're a true Cyber Hero! 🎯`;
+            emoji = '🏆';
+            const excellentGifs = [
+                'https://media.giphy.com/media/3o7absbD7PbTFQa0c8/giphy.gif',
+                'https://media.giphy.com/media/26AHPxxnSw1L9T1rW/giphy.gif'
+            ];
+            resultGif = excellentGifs[Math.floor(Math.random() * excellentGifs.length)];
+        } else if (percentage >= 60) {
+            message = `Great job ${userName}! Keep learning! 🎊`;
             emoji = '👏';
+            // Sometimes show GIF, sometimes don't for variety
+            if (Math.random() < 0.6) {
+                resultGif = 'https://media.giphy.com/media/3o7abA4a0QCXtSxGN2/giphy.gif';
+            }
+        } else {
+            message = `${userName}, keep practicing! You'll get there! 💪`;
+            emoji = '📚';
+            // No GIF for low scores to encourage retry
         }
         
-        resultContainer.innerHTML = `
+        // BUILD RESULT HTML WITH OPTIONAL GIF
+        let resultHTML = `
             <div class="result-content">
                 <div class="result-emoji">${emoji}</div>
+        `;
+        
+        // ADD GIF IF AVAILABLE
+        if (resultGif && Math.random() < 0.8) { // 80% chance to show GIF when available
+            resultHTML += `
+                <div id="result-gif-container">
+                    <img src="${resultGif}" alt="Celebration" 
+                         style="max-width: 250px; height: auto; border-radius: 15px; margin: 20px 0;">
+                </div>
+            `;
+        }
+        
+        resultHTML += `
                 <h2>${message}</h2>
                 <div class="score-display">
                     <div class="score-circle">
@@ -126,7 +180,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
             </div>
         `;
+        
+        resultContainer.innerHTML = resultHTML;
 
+        // EXISTING SHARE FUNCTIONALITY (unchanged)
         document.getElementById('share-whatsapp').addEventListener('click', () => {
             const shareMessage = `🎯 I scored ${percentage}% (${score}/${quiz.questions.length}) on the "${quiz.title}" quiz! 🔐\n\nLet's test, are you a Cyber Hero??? 🦸‍♂️\n\nTake the challenge: `;
             const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage + window.location.href)}`;

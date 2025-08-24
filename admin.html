@@ -3,21 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel</title>
+    <title>Admin Panel - Cyber Hero Quiz Management</title>
     
- <meta http-equiv="Content-Security-Policy" content="
-    default-src 'self' https:;
-    script-src 'self' 'unsafe-inline' https://www.gstatic.com https://cdnjs.cloudflare.com https://www.googleapis.com;
-    style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com;
-    font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com;
-    img-src 'self' data: https:;
-    connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://firestore.googleapis.com;
-    frame-src 'self';
-    object-src 'none';
-    base-uri 'self';
-">
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self' https:;
+        script-src 'self' 'unsafe-inline' https://www.gstatic.com https://cdnjs.cloudflare.com https://www.googleapis.com;
+        style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com;
+        font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com;
+        img-src 'self' data: https:;
+        connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://firestore.googleapis.com;
+        frame-src 'self';
+        object-src 'none';
+        base-uri 'self';
+    ">
 
-    
     <!-- Font Awesome and other CDN resources -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
@@ -25,6 +24,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    
     <!-- Your CSS -->
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -63,38 +63,36 @@
         </div>
         <div class="admin-info">
             <p><i class="fas fa-shield-alt"></i> Secure Admin Portal</p>
-            
         </div>
     </div>
 
     <!-- Password Reset Section -->
-<div id="password-reset-section" class="hidden">
-    <div class="password-reset-form">
-        <h3><i class="fas fa-key"></i> Change Admin Password</h3>
-        <div class="form-group">
-            <label for="current-password">Current Password:</label>
-            <input type="password" id="current-password" placeholder="Enter current password" required>
+    <div id="password-reset-section" class="hidden">
+        <div class="password-reset-form">
+            <h3><i class="fas fa-key"></i> Change Admin Password</h3>
+            <div class="form-group">
+                <label for="current-password">Current Password:</label>
+                <input type="password" id="current-password" placeholder="Enter current password" required>
+            </div>
+            <div class="form-group">
+                <label for="new-password">New Password:</label>
+                <input type="password" id="new-password" placeholder="Enter new password" required>
+            </div>
+            <div class="form-group">
+                <label for="confirm-password">Confirm Password:</label>
+                <input type="password" id="confirm-password" placeholder="Confirm new password" required>
+            </div>
+            <div class="form-actions">
+                <button id="reset-password-btn" type="button" class="success-btn">
+                    <i class="fas fa-save"></i> Update Password
+                </button>
+                <button id="cancel-password-reset" type="button" class="cancel-btn">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+            </div>
+            <div id="password-message" class="message"></div>
         </div>
-        <div class="form-group">
-            <label for="new-password">New Password:</label>
-            <input type="password" id="new-password" placeholder="Enter new password" required>
-        </div>
-        <div class="form-group">
-            <label for="confirm-password">Confirm Password:</label>
-            <input type="password" id="confirm-password" placeholder="Confirm new password" required>
-        </div>
-        <div class="form-actions">
-            <button id="reset-password-btn" type="button" class="success-btn">
-                <i class="fas fa-save"></i> Update Password
-            </button>
-            <button id="cancel-password-reset" type="button" class="cancel-btn">
-                <i class="fas fa-times"></i> Cancel
-            </button>
-        </div>
-        <div id="password-message" class="message"></div>
     </div>
-</div>
-
 
     <nav class="admin-nav">
         <button id="create-quiz-tab" class="tab-btn active">Create Quiz</button>
@@ -111,14 +109,8 @@
                 <input type="text" id="quiz-thumbnail" placeholder="Thumbnail Image URL" required>
                 
                 <div id="questions-container">
-                    <!-- Questions will be added here -->
+                    <!-- Questions with image/GIF inputs will be added here dynamically by JavaScript -->
                 </div>
-                <!-- Add this in your question creation form -->
-<div class="form-group">
-    <label for="question-image">Question Image (Optional):</label>
-    <input type="url" class="question-image-url" placeholder="https://example.com/image.jpg (leave blank if no image)">
-    <small>💡 Add JPG, PNG, or GIF to illustrate the concept</small>
-</div>
 
                 <button type="button" id="add-question-btn">Add Question</button>
                 <button type="submit">Save Quiz</button>
@@ -164,8 +156,7 @@
     </footer>
 
     <script src="js/firebase-config.js"></script>
-
-<script src="js/auth.js"></script>
-<script src="js/admin.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/admin.js"></script>
 </body>
 </html>
