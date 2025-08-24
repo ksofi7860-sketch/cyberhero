@@ -2149,49 +2149,67 @@ h1, h2, h3, h4, h5, h6, p {
 
 
 
-
-/* Remove iOS Safari blue borders and highlights */
-input[type="radio"] {
-    -webkit-appearance: none !important;
-    -webkit-tap-highlight-color: transparent !important;
-    outline: none !important;
-    border: none !important;
-    box-shadow: none !important;
-}
-
-input[type="radio"]:focus {
-    -webkit-tap-highlight-color: transparent !important;
-    outline: none !important;
-    box-shadow: none !important;
-}
-
-/* Remove iOS default form styling */
-input[type="radio"]:checked {
-    -webkit-appearance: none !important;
-}
-/* Add this after the iOS fix CSS */
+/* ===== DEFAULT RADIO BUTTON STYLES (Admin Panel) ===== */
 input[type="radio"] {
     width: 16px;
     height: 16px;
     border: 2px solid #ccc;
     border-radius: 50%;
     background: white;
+    margin: 0 5px 0 0;
+    cursor: pointer;
 }
 
 input[type="radio"]:checked {
     background: #007bff;
     border-color: #007bff;
 }
-/* Only target quiz player radio buttons */
+
+input[type="radio"]:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+/* ===== iOS SAFARI FIX (Quiz Player Only) ===== */
+.quiz-player input[type="radio"],
 .quiz-option input[type="radio"] {
     -webkit-appearance: none !important;
     -webkit-tap-highlight-color: transparent !important;
     outline: none !important;
-    border: none !important;
-    box-shadow: none !important;
+    
+    /* Custom styling for quiz player */
+    width: 18px;
+    height: 18px;
+    border: 2px solid #ddd;
+    border-radius: 50%;
+    background: white;
+    position: relative;
 }
 
-/* Keep admin panel radio buttons normal */
-.admin-panel input[type="radio"] {
+.quiz-player input[type="radio"]:checked,
+.quiz-option input[type="radio"]:checked {
+    background: #28a745;
+    border-color: #28a745;
+}
+
+.quiz-player input[type="radio"]:focus,
+.quiz-option input[type="radio"]:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+/* ===== ADMIN PANEL OVERRIDE (Keep Normal) ===== */
+.admin-panel input[type="radio"],
+.question-block input[type="radio"] {
     -webkit-appearance: auto !important;
+    width: 16px !important;
+    height: 16px !important;
+    border: 2px solid #007bff !important;
+    background: white !important;
+}
+
+.admin-panel input[type="radio"]:checked,
+.question-block input[type="radio"]:checked {
+    background: #007bff !important;
+    border-color: #007bff !important;
 }
