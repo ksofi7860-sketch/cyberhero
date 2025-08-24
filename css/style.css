@@ -648,8 +648,9 @@ button:hover {
 
 /* Footer - NON-STICKY */
 footer {
-    background: linear-gradient(135deg, #e6bc26 0%, #4169e1 100%);
-    color: white;
+    background: #f7ad18;
+
+    color: rgb(13, 11, 29);
     padding: 2rem 0;
     margin-top: 3rem;
     box-shadow: 0 -4px 6px rgba(0,0,0,0.1);
@@ -676,7 +677,7 @@ footer {
 }
 
 footer a {
-    color: white;
+    color: rgb(17, 16, 34);
     text-decoration: none;
     font-size: 1.5em;
     transition: all 0.3s ease;
@@ -840,6 +841,7 @@ footer a[href*="youtube"]:hover {
     
     .footer-left p {
         font-size: 0.7em;
+       
     }
     
     .leaderboard-container {
