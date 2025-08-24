@@ -1035,60 +1035,94 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ADD QUESTION FUNCTIONALITY
-    if (addQuestionBtn) {
-        addQuestionBtn.addEventListener('click', () => {
-            questionCount++;
-            const questionDiv = document.createElement('div');
-            questionDiv.classList.add('question-block');
-            questionDiv.innerHTML = `
-                <hr>
-                <h4>Question ${questionCount}</h4>
-                <input type="text" placeholder="Question" class="question-text" required>
-                
-                <div class="form-group">
-                    <label>Question Media URL (Optional):</label>
-                    <input type="url" class="question-image-url" placeholder="https://example.com/image.jpg or animated.gif">
-                    <small>💡 Add JPG, PNG, or GIF to illustrate cybersecurity concepts</small>
+    // 🔧 FIXED: ADD QUESTION FUNCTIONALITY
+if (addQuestionBtn) {
+    addQuestionBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        questionCount++;
+        const questionDiv = document.createElement('div');
+        questionDiv.classList.add('question-block');
+        questionDiv.innerHTML = `
+            <hr>
+            <h4>Question ${questionCount}</h4>
+            <input type="text" placeholder="Question" class="question-text" required>
+            
+            <div class="form-group">
+                <label>Question Media URL (Optional):</label>
+                <input type="url" class="question-image-url" placeholder="https://example.com/image.jpg or animated.gif">
+                <small>💡 Add JPG, PNG, or GIF to illustrate cybersecurity concepts</small>
+            </div>
+            
+            <div class="option-group">
+                <div class="option-row">
+                    <input type="radio" name="correct-${questionCount}" value="0" class="correct-radio">
+                    <input type="text" placeholder="Option 1" class="option-text" required>
+                    <label>✓ Correct Answer</label>
                 </div>
-                
-                <div class="option-group">
-                    <div class="option-row">
-                        <input type="radio" name="correct-${questionCount}" value="0" class="correct-radio">
-                        <input type="text" placeholder="Option 1" class="option-text" required>
-                        <label>✓ Correct Answer</label>
-                    </div>
-                    <div class="option-row">
-                        <input type="radio" name="correct-${questionCount}" value="1" class="correct-radio">
-                        <input type="text" placeholder="Option 2" class="option-text" required>
-                        <label>✓ Correct Answer</label>
-                    </div>
-                    <div class="option-row">
-                        <input type="radio" name="correct-${questionCount}" value="2" class="correct-radio">
-                        <input type="text" placeholder="Option 3" class="option-text" required>
-                        <label>✓ Correct Answer</label>
-                    </div>
-                    <div class="option-row">
-                        <input type="radio" name="correct-${questionCount}" value="3" class="correct-radio">
-                        <input type="text" placeholder="Option 4" class="option-text" required>
-                        <label>✓ Correct Answer</label>
-                    </div>
+                <div class="option-row">
+                    <input type="radio" name="correct-${questionCount}" value="1" class="correct-radio">
+                    <input type="text" placeholder="Option 2" class="option-text" required>
+                    <label>✓ Correct Answer</label>
                 </div>
-                <button type="button" class="remove-question-btn">Remove Question</button>
-            `;
-            if (questionsContainer) {
-                questionsContainer.appendChild(questionDiv);
-            }
-        });
-    }
+                <div class="option-row">
+                    <input type="radio" name="correct-${questionCount}" value="2" class="correct-radio">
+                    <input type="text" placeholder="Option 3" class="option-text" required>
+                    <label>✓ Correct Answer</label>
+                </div>
+                <div class="option-row">
+                    <input type="radio" name="correct-${questionCount}" value="3" class="correct-radio">
+                    <input type="text" placeholder="Option 4" class="option-text" required>
+                    <label>✓ Correct Answer</label>
+                </div>
+            </div>
+            <button type="button" class="remove-question-btn">Remove Question</button>
+        `;
+        if (questionsContainer) {
+            questionsContainer.appendChild(questionDiv);
+        }
+    });
+}
+
 
     // REMOVE QUESTION FUNCTIONALITY
-    if (questionsContainer) {
-        questionsContainer.addEventListener('click', (e) => {
-            if (e.target.classList.contains('remove-question-btn')) {
-                e.target.parentNode.remove();
+    // 🔧 FIXED: REMOVE QUESTION FUNCTIONALITY
+if (questionsContainer) {
+    questionsContainer.addEventListener('click', (e) => {
+        if (e.target.classList.contains('remove-question-btn')) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const questionBlock = e.target.closest('.question-block');
+            if (questionBlock) {
+                questionBlock.remove();
+                
+                // Renumber remaining questions
+                const questionBlocks = questionsContainer.querySelectorAll('.question-block');
+                questionCount = 0;
+                
+                questionBlocks.forEach((block, index) => {
+                    questionCount = index + 1;
+                    const questionNumber = questionCount;
+                    
+                    // Update question header
+                    const header = block.querySelector('h4');
+                    if (header) {
+                        header.textContent = `Question ${questionNumber}`;
+                    }
+                    
+                    // Update radio button names
+                    const radios = block.querySelectorAll('.correct-radio');
+                    radios.forEach(radio => {
+                        radio.name = `correct-${questionNumber}`;
+                    });
+                });
             }
-        });
-    }
+        }
+    });
+}
+
 
     // FORM SUBMISSION WITH PROPER UPDATE/CREATE LOGIC
     if (createQuizForm) {
