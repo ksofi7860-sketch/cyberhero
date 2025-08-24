@@ -82,35 +82,46 @@
         </div>
 
         <!-- Result Container - Enhanced with GIF Support -->
-        <div id="result-container" class="hidden">
-            <div class="result-content">
-                <div class="result-emoji" id="result-emoji"></div>
-                
-                <!-- GIF Container for Results -->
-                <div id="result-gif-container"></div>
-                
-                <h2 id="result-message"></h2>
-                
-                <div class="score-display">
-                    <div class="score-circle">
-                        <span class="percentage" id="final-percentage"></span>
-                        <span class="score-text" id="score-text"></span>
-                    </div>
-                </div>
-                
-                <div class="share-buttons">
-                    <button id="share-whatsapp" class="share-btn whatsapp">
-                        <i class="fab fa-whatsapp"></i> Share on WhatsApp
-                    </button>
-                    <button id="share-link" class="share-btn copy">
-                        <i class="fas fa-copy"></i> Copy Link
-                    </button>
-                    <button id="retake-quiz" class="share-btn retake">
-                        <i class="fas fa-redo"></i> Retake Quiz
-                    </button>
-                </div>
+        <!-- Enhanced Result Container in quiz.html -->
+<div id="result-container" class="hidden">
+    <div class="result-content">
+        <div class="result-emoji" id="result-emoji"></div>
+        
+        <!-- GIF Container for Results -->
+        <div id="result-gif-container"></div>
+        
+        <h2 id="result-message"></h2>
+        
+        <div class="score-display">
+            <div class="score-circle">
+                <span class="percentage" id="final-percentage"></span>
+                <span class="score-text" id="score-text"></span>
             </div>
         </div>
+        
+        <!-- NEW: Leaderboard Call-to-Action -->
+        <div class="leaderboard-cta">
+            <p class="leaderboard-message">🏆 <strong>See how you ranked!</strong></p>
+            <p class="leaderboard-subtitle">Check your position on the leaderboard</p>
+            <button id="view-leaderboard-btn" class="leaderboard-btn">
+                <i class="fas fa-trophy"></i> View Leaderboard
+            </button>
+        </div>
+        
+        <div class="share-buttons">
+            <button id="share-whatsapp" class="share-btn whatsapp">
+                <i class="fab fa-whatsapp"></i> Share Score
+            </button>
+            <button id="share-link" class="share-btn copy">
+                <i class="fas fa-copy"></i> Copy Link
+            </button>
+            <button id="retake-quiz" class="share-btn retake">
+                <i class="fas fa-redo"></i> Retake Quiz
+            </button>
+        </div>
+    </div>
+</div>
+
     </main>
  
     <footer>

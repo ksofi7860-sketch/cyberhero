@@ -83,6 +83,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             allLeaderboardData = Object.values(userBestScores)
                 .sort((a, b) => b.percentage - a.percentage);
 
+            // 🎯 ADD: Check for recently completed quiz
+            const justCompleted = JSON.parse(localStorage.getItem('justCompletedQuiz') || '{}');
+            
+            if (justCompleted.userName) {
+                // Show success message
+                showCompletionMessage(justCompleted);
+                
+                // Scroll to leaderboard after a short delay
+                setTimeout(() => {
+                    const leaderboardSection = document.querySelector('.leaderboard-section') || 
+                                              document.getElementById('leaderboard');
+                    if (leaderboardSection) {
+                        leaderboardSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                }, 1000);
+            }
+
             displayLeaderboardPage(1);
         } catch (error) {
             console.error('Error loading leaderboard:', error);
@@ -96,6 +113,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const endIndex = startIndex + itemsPerPage;
         const pageData = allLeaderboardData.slice(startIndex, endIndex);
 
+        // 🎯 ADD: Get recently completed quiz info for highlighting
+        const justCompleted = JSON.parse(localStorage.getItem('justCompletedQuiz') || '{}');
+
         let leaderboardHTML = '';
         
         pageData.forEach((user, index) => {
@@ -104,11 +124,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             const medal = globalRank === 0 ? '🥇' : globalRank === 1 ? '🥈' : globalRank === 2 ? '🥉' : `#${globalRank + 1}`;
             const heroTitle = user.percentage === 100 ? '<span class="hero-badge">🦸‍♂️ Cyber Hero</span>' : '';
             
+            // 🎯 ADD: Check if this is the user who just completed a quiz
+            const isRecentUser = justCompleted.userName && 
+                                justCompleted.userName.toLowerCase() === user.userName.toLowerCase() && 
+                                Math.abs(justCompleted.percentage - user.percentage) < 1; // Allow small percentage difference
+            
             leaderboardHTML += `
-                <div class="leaderboard-item ${rankClass}">
+                <div class="leaderboard-item ${rankClass} ${isRecentUser ? 'highlight-user' : ''}">
                     <div class="rank">${medal}</div>
                     <div class="user-info">
-                        <div class="user-name">${user.userName} ${heroTitle}</div>
+                        <div class="user-name">
+                            ${user.userName} ${heroTitle}
+                            ${isRecentUser ? '<span class="recent-badge">YOU!</span>' : ''}
+                        </div>
                         <div class="quiz-name">${user.quizTitle}</div>
                     </div>
                     <div class="score-info">
@@ -140,6 +168,60 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         leaderboardContainer.innerHTML = leaderboardHTML + paginationHTML;
+        
+        // 🎯 ADD: Clear the highlighting after showing it for 5 seconds
+        if (justCompleted.userName) {
+            setTimeout(() => {
+                localStorage.removeItem('justCompletedQuiz');
+                // Remove highlighting from all items
+                document.querySelectorAll('.highlight-user').forEach(item => {
+                    item.classList.remove('highlight-user');
+                });
+                document.querySelectorAll('.recent-badge').forEach(badge => {
+                    badge.remove();
+                });
+            }, 5000);
+        }
+    }
+
+    // 🎯 NEW: Function to show completion message
+    function showCompletionMessage(completedQuiz) {
+        // Create success message
+        const message = document.createElement('div');
+        message.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 25px;
+            z-index: 1000;
+            font-weight: 600;
+            font-size: 1.1em;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+            animation: slideInDown 0.5s ease-out;
+            text-align: center;
+            max-width: 90%;
+        `;
+        
+        message.innerHTML = `
+            🏆 <strong>Great job ${completedQuiz.userName}!</strong><br>
+            Your score: ${completedQuiz.percentage}% - Check your ranking below!
+        `;
+        
+        document.body.appendChild(message);
+        
+        // Remove message after 5 seconds
+        setTimeout(() => {
+            message.style.animation = 'slideOutUp 0.5s ease-in';
+            setTimeout(() => {
+                if (message.parentNode) {
+                    message.remove();
+                }
+            }, 500);
+        }, 4500);
     }
 
     // Make changePage function global
@@ -153,6 +235,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 });
+
 // Add to your main quiz loading script
 function loadQuizzesLocal() {
     const quizzes = JSON.parse(localStorage.getItem('cyberHeroQuizzes') || '[]');

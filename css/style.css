@@ -2028,3 +2028,119 @@ h1, h2, h3, h4, h5, h6, p {
     max-width: 600px;
     margin: 20px auto;
 }
+
+/* ===== LEADERBOARD CALL-TO-ACTION STYLES ===== */
+
+.leaderboard-cta {
+    text-align: center;
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e3f2fd 100%);
+    border-radius: 15px;
+    border: 2px solid #e3f2fd;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.leaderboard-message {
+    font-size: 1.3em;
+    color: #1565c0;
+    margin: 0 0 0.5rem 0;
+    font-weight: 600;
+}
+
+.leaderboard-subtitle {
+    font-size: 1em;
+    color: #666;
+    margin: 0 0 1.5rem 0;
+    opacity: 0.8;
+}
+
+.leaderboard-btn {
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 25px;
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.leaderboard-btn:hover {
+    background: linear-gradient(135deg, #f57c00 0%, #ff9800 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+}
+
+.leaderboard-btn:active {
+    transform: translateY(0);
+}
+
+.leaderboard-btn i {
+    font-size: 1.2em;
+}
+
+/* Mobile responsiveness */
+@media screen and (max-width: 768px) {
+    .leaderboard-cta {
+        margin: 1.5rem 0;
+        padding: 1rem;
+    }
+    
+    .leaderboard-message {
+        font-size: 1.2em;
+    }
+    
+    .leaderboard-btn {
+        padding: 12px 25px;
+        font-size: 1em;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .leaderboard-cta {
+        margin: 1rem 0;
+        padding: 0.8rem;
+    }
+    
+    .leaderboard-message {
+        font-size: 1.1em;
+    }
+    
+    .leaderboard-btn {
+        padding: 10px 20px;
+        font-size: 0.9em;
+        width: 100%;
+        justify-content: center;
+    }
+}
+/* ===== LEADERBOARD USER HIGHLIGHTING ===== */
+
+.highlight-user {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffecb3 100%) !important;
+    border: 2px solid #ff9800 !important;
+    box-shadow: 0 4px 15px rgba(255, 152, 0, 0.2) !important;
+    animation: pulseHighlight 2s ease-in-out infinite;
+}
+
+.recent-badge {
+    background: #ff9800;
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.8em;
+    font-weight: bold;
+    margin-left: 0.5rem;
+}
+
+@keyframes pulseHighlight {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
