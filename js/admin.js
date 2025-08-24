@@ -132,53 +132,58 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
 
         // FIXED: Clear all results function
+        // UPDATED: More robust clearAllResults function
         async clearAllResults() {
             console.log('🗑️ Starting to clear all results...');
-            
+    
             try {
-                // Try Firebase first
-                if (window.FirebaseHelper && typeof window.FirebaseHelper.clearAllResults === 'function') {
-                    await window.FirebaseHelper.clearAllResults();
-                    console.log('✅ Firebase results cleared via FirebaseHelper');
-                } else if (window.firebase && window.firebase.firestore) {
-                    // Direct Firebase deletion
-                    console.log('🔥 Clearing Firebase directly...');
-                    const db = window.firebase.firestore();
-                    const resultsRef = db.collection('quizResults');
-                    
-                    const snapshot = await resultsRef.get();
-                    console.log(`📊 Found ${snapshot.size} results to delete`);
-                    
-                    if (!snapshot.empty) {
-                        const deletePromises = [];
-                        snapshot.forEach((doc) => {
-                            deletePromises.push(doc.ref.delete());
-                        });
-                        
-                        await Promise.all(deletePromises);
-                        console.log(`✅ Deleted ${deletePromises.length} results from Firebase`);
-                    } else {
-                        console.log('✅ No Firebase results to delete');
-                    }
-                } else {
-                    console.log('⚠️ Firebase not available, skipping...');
+        // Method 1: Try batch delete (more reliable)
+        if (window.firebase && window.firebase.firestore) {
+            console.log('🔥 Using batch delete...');
+            const db = window.firebase.firestore();
+            const resultsRef = db.collection('quizResults');
+            
+            // Get all documents in smaller batches
+            const snapshot = await resultsRef.limit(500).get();
+            console.log(`📊 Found ${snapshot.size} results to delete`);
+            
+            if (!snapshot.empty) {
+                // Use batch delete (more reliable than individual deletes)
+                const batch = db.batch();
+                snapshot.docs.forEach((doc) => {
+                    batch.delete(doc.ref);
+                });
+                
+                await batch.commit();
+                console.log(`✅ Batch deleted ${snapshot.size} results from Firebase`);
+                
+                // If there are more documents, recursively delete them
+                if (snapshot.size === 500) {
+                    return await this.clearAllResults(); // Recursive call for remaining docs
                 }
-            } catch (error) {
-                console.error('❌ Firebase clear failed:', error);
+            } else {
+                console.log('✅ No Firebase results to delete');
             }
-            
-            try {
-                // Clear localStorage
-                localStorage.removeItem('cyberHeroResults');
-                console.log('✅ localStorage results cleared');
-            } catch (error) {
-                console.error('❌ localStorage clear failed:', error);
-            }
-            
-            console.log('🎯 Clear operation completed');
-            return true;
+        } else {
+            console.log('⚠️ Firebase not available, skipping...');
         }
-    }; // FIXED: Proper closing of DataHelper object
+    } catch (error) {
+        console.error('❌ Firebase clear failed:', error);
+        console.error('Error details:', error.code, error.message);
+    }
+    
+    try {
+        // Always clear localStorage
+        localStorage.removeItem('cyberHeroResults');
+        console.log('✅ localStorage results cleared');
+    } catch (error) {
+        console.error('❌ localStorage clear failed:', error);
+    }
+    
+    console.log('🎯 Clear operation completed');
+    return true;
+}
+    };
 
     // Password reset functionality
     if (changePasswordToggle) {
