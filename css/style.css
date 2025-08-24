@@ -2146,3 +2146,39 @@ h1, h2, h3, h4, h5, h6, p {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.02); }
 }
+
+
+
+
+/* Remove iOS Safari blue borders and highlights */
+input[type="radio"] {
+    -webkit-appearance: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+input[type="radio"]:focus {
+    -webkit-tap-highlight-color: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Remove iOS default form styling */
+input[type="radio"]:checked {
+    -webkit-appearance: none !important;
+}
+/* Add this after the iOS fix CSS */
+input[type="radio"] {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    background: white;
+}
+
+input[type="radio"]:checked {
+    background: #007bff;
+    border-color: #007bff;
+}
