@@ -1,4 +1,4 @@
-// ===== js/admin.js (COMPLETE UPDATED VERSION WITH IMAGE/GIF SUPPORT) =====
+// ===== js/admin.js (COMPLETE CORRECTED VERSION) =====
 document.addEventListener('DOMContentLoaded', async () => {
     const createQuizForm = document.getElementById('create-quiz-form');
     const questionsContainer = document.getElementById('questions-container');
@@ -131,24 +131,54 @@ document.addEventListener('DOMContentLoaded', async () => {
             return localResults;
         },
 
-        // Clear all results
+        // FIXED: Clear all results function
         async clearAllResults() {
+            console.log('🗑️ Starting to clear all results...');
+            
             try {
                 // Try Firebase first
                 if (window.FirebaseHelper && typeof window.FirebaseHelper.clearAllResults === 'function') {
                     await window.FirebaseHelper.clearAllResults();
-                    console.log('✅ Firebase results cleared');
+                    console.log('✅ Firebase results cleared via FirebaseHelper');
+                } else if (window.firebase && window.firebase.firestore) {
+                    // Direct Firebase deletion
+                    console.log('🔥 Clearing Firebase directly...');
+                    const db = window.firebase.firestore();
+                    const resultsRef = db.collection('quizResults');
+                    
+                    const snapshot = await resultsRef.get();
+                    console.log(`📊 Found ${snapshot.size} results to delete`);
+                    
+                    if (!snapshot.empty) {
+                        const deletePromises = [];
+                        snapshot.forEach((doc) => {
+                            deletePromises.push(doc.ref.delete());
+                        });
+                        
+                        await Promise.all(deletePromises);
+                        console.log(`✅ Deleted ${deletePromises.length} results from Firebase`);
+                    } else {
+                        console.log('✅ No Firebase results to delete');
+                    }
+                } else {
+                    console.log('⚠️ Firebase not available, skipping...');
                 }
             } catch (error) {
-                console.log('⚠️ Firebase clear failed');
+                console.error('❌ Firebase clear failed:', error);
             }
             
-            // Clear localStorage
-            localStorage.removeItem('cyberHeroResults');
-            console.log('✅ localStorage results cleared');
+            try {
+                // Clear localStorage
+                localStorage.removeItem('cyberHeroResults');
+                console.log('✅ localStorage results cleared');
+            } catch (error) {
+                console.error('❌ localStorage clear failed:', error);
+            }
+            
+            console.log('🎯 Clear operation completed');
             return true;
         }
-    };
+    }; // FIXED: Proper closing of DataHelper object
 
     // Password reset functionality
     if (changePasswordToggle) {
