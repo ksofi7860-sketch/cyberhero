@@ -1,12 +1,13 @@
-// ===== js/firebase-config.js (COMPLETE WORKING VERSION) =====
+// ===== js/firebase-config.js (COMPLETE CORRECTED VERSION) =====
 const originalLog = console.log;
-const ENABLE_LOGS = false; // Set to false to suppress logs
+const ENABLE_LOGS = true; // Set to true for debugging, false for production
 
 console.log = function(...args) {
     if (ENABLE_LOGS) {
         originalLog.apply(console, args);
     }
 };
+
 // Firebase Configuration
 const firebaseConfig = {
   apiKey: "AIzaSyB_U2oT1LJJJgnsle-hV6_dnliMBPtJuaE",
@@ -35,11 +36,12 @@ try {
     console.error('Firebase services initialization error:', error);
 }
 
-// Enhanced FirebaseHelper with seamless localStorage integration
+// Enhanced FirebaseHelper with proper update/create logic
 const FirebaseHelper = {
-    // Save quiz with automatic fallback
+    // FIXED: Save quiz with proper create vs update handling
     async saveQuiz(quiz) {
         console.log('💾 Saving quiz:', quiz.title);
+        console.log('🔍 Quiz ID:', quiz.id);
         
         // Validate quiz data first
         if (!quiz.title || !quiz.questions || quiz.questions.length === 0) {
@@ -47,18 +49,37 @@ const FirebaseHelper = {
         }
         
         try {
-            // Try Firebase first
             const quizData = {
                 title: quiz.title.trim(),
                 thumbnail: quiz.thumbnail || 'https://via.placeholder.com/300x200?text=Quiz',
                 questions: quiz.questions,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 createdBy: 'admin'
             };
             
-            await db.collection('quizzes').add(quizData);
-            console.log('✅ Quiz saved to Firebase successfully!');
-            return { success: true, method: 'firebase' };
+            if (quiz.id && quiz.id !== 'undefined') {
+                // UPDATE EXISTING QUIZ
+                console.log('🔄 Updating existing quiz in Firebase:', quiz.id);
+                
+                // Add update timestamp
+                quizData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+                
+                // Use set with merge to update existing document
+                await db.collection('quizzes').doc(quiz.id).set(quizData, { merge: true });
+                console.log('✅ Quiz updated in Firebase successfully!');
+                return { success: true, method: 'updated', id: quiz.id };
+                
+            } else {
+                // CREATE NEW QUIZ
+                console.log('➕ Creating new quiz in Firebase');
+                
+                // Add creation timestamp
+                quizData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                
+                // Use add() for new documents
+                const docRef = await db.collection('quizzes').add(quizData);
+                console.log('✅ Quiz created in Firebase with ID:', docRef.id);
+                return { success: true, method: 'created', id: docRef.id };
+            }
             
         } catch (error) {
             console.log('⚠️ Firebase save failed, using localStorage backup:', error.message);
@@ -66,31 +87,61 @@ const FirebaseHelper = {
         }
     },
 
-    // Save quiz to localStorage
+    // FIXED: Save quiz to localStorage with proper update logic
     saveQuizLocal(quiz) {
         try {
             const quizzes = JSON.parse(localStorage.getItem('cyberHeroQuizzes') || '[]');
             
-            const quizData = {
-                id: quiz.id || Date.now().toString(),
-                title: quiz.title.trim(),
-                thumbnail: quiz.thumbnail || 'https://via.placeholder.com/300x200?text=Quiz',
-                questions: quiz.questions,
-                createdAt: new Date().toISOString(),
-                createdBy: 'admin'
-            };
-            
-            // Check if updating existing quiz
-            const existingIndex = quizzes.findIndex(q => q.id === quizData.id);
-            if (existingIndex >= 0) {
-                quizzes[existingIndex] = quizData;
-                console.log('✅ Quiz updated in localStorage');
+            if (quiz.id && quiz.id !== 'undefined') {
+                // UPDATE EXISTING QUIZ
+                console.log('🔄 Updating existing quiz in localStorage:', quiz.id);
+                
+                const existingIndex = quizzes.findIndex(q => q.id === quiz.id);
+                if (existingIndex >= 0) {
+                    // Keep original creation info, add update info
+                    const existingQuiz = quizzes[existingIndex];
+                    const updatedQuiz = {
+                        ...quiz,
+                        id: quiz.id,
+                        title: quiz.title.trim(),
+                        thumbnail: quiz.thumbnail || 'https://via.placeholder.com/300x200?text=Quiz',
+                        questions: quiz.questions,
+                        createdAt: existingQuiz.createdAt || new Date().toISOString(),
+                        updatedAt: new Date().toISOString(),
+                        createdBy: 'admin'
+                    };
+                    
+                    quizzes[existingIndex] = updatedQuiz;
+                    console.log('✅ Quiz updated in localStorage');
+                } else {
+                    console.log('⚠️ Quiz not found in localStorage, adding as new');
+                    const newQuiz = {
+                        ...quiz,
+                        id: quiz.id,
+                        title: quiz.title.trim(),
+                        thumbnail: quiz.thumbnail || 'https://via.placeholder.com/300x200?text=Quiz',
+                        questions: quiz.questions,
+                        createdAt: new Date().toISOString(),
+                        createdBy: 'admin'
+                    };
+                    quizzes.push(newQuiz);
+                }
             } else {
-                quizzes.push(quizData);
-                console.log('✅ Quiz added to localStorage');
+                // CREATE NEW QUIZ
+                console.log('➕ Creating new quiz in localStorage');
+                const newQuiz = {
+                    id: Date.now().toString(),
+                    title: quiz.title.trim(),
+                    thumbnail: quiz.thumbnail || 'https://via.placeholder.com/300x200?text=Quiz',
+                    questions: quiz.questions,
+                    createdAt: new Date().toISOString(),
+                    createdBy: 'admin'
+                };
+                quizzes.push(newQuiz);
             }
             
             localStorage.setItem('cyberHeroQuizzes', JSON.stringify(quizzes));
+            console.log('✅ Quiz saved to localStorage successfully');
             return { success: true, method: 'localStorage' };
             
         } catch (error) {
@@ -127,39 +178,6 @@ const FirebaseHelper = {
         const localQuizzes = JSON.parse(localStorage.getItem('cyberHeroQuizzes') || '[]');
         console.log(`✅ Loaded ${localQuizzes.length} quizzes from localStorage`);
         return localQuizzes;
-    },
-
-    // Update quiz
-    async updateQuiz(quizId, quiz) {
-        try {
-            // Try Firebase first
-            const quizData = {
-                title: quiz.title.trim(),
-                thumbnail: quiz.thumbnail,
-                questions: quiz.questions,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            };
-            
-            await db.collection('quizzes').doc(quizId).set(quizData, { merge: true });
-            console.log('✅ Quiz updated in Firebase successfully!');
-            
-        } catch (error) {
-            console.log('⚠️ Firebase update failed, updating localStorage');
-        }
-        
-        // Always update localStorage too
-        const quizzes = JSON.parse(localStorage.getItem('cyberHeroQuizzes') || '[]');
-        const index = quizzes.findIndex(q => q.id === quizId);
-        if (index >= 0) {
-            quizzes[index] = {
-                ...quizzes[index],
-                ...quiz,
-                id: quizId,
-                updatedAt: new Date().toISOString()
-            };
-            localStorage.setItem('cyberHeroQuizzes', JSON.stringify(quizzes));
-            console.log('✅ Quiz updated in localStorage');
-        }
     },
 
     // Delete quiz
@@ -292,7 +310,7 @@ const FirebaseHelper = {
         return true;
     },
 
-    // Rate limiting (unchanged)
+    // Rate limiting
     rateLimitMap: new Map(),
     
     checkRateLimit(action, limit = 5) {
@@ -314,7 +332,7 @@ const FirebaseHelper = {
         }
     },
 
-    // Enhanced connection test
+    // Connection test
     testConnection() {
         try {
             if (db && typeof db.collection === 'function') {
