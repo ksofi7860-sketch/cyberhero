@@ -1,265 +1,168 @@
-// ===== js/auth.js (FIXED WORKING VERSION) =====
-(function() {
-    const ADMIN_USERNAME = 'admin';
-    const ADMIN_PASSWORD_KEY = 'adminPassword';
-    
-    // Security settings
-    let loginAttempts = 0;
-    let lastAttemptTime = 0;
-    const MAX_ATTEMPTS = 3;
-    const LOCKOUT_TIME = 30000;
-    const SESSION_TIMEOUT = 24 * 60 * 60 * 1000;
+// ===== js/auth.js - Brainy Tuition Classes admin auth =====
+(function () {
+  const ADMIN_USERNAME = "admin";
+  const ADMIN_PASSWORD_KEY = "brainyAdminPassword";
+  const MAX_ATTEMPTS = 3;
+  const LOCKOUT_TIME = 30_000;
+  const SESSION_TIMEOUT = 24 * 60 * 60 * 1000;
 
-    // Initialize secure password if not set
-    if (!localStorage.getItem(ADMIN_PASSWORD_KEY)) {
-        const secureDefault = 'CH' + Date.now().toString().slice(-6) + '!';
-        localStorage.setItem(ADMIN_PASSWORD_KEY, secureDefault);
-        alert('🔐 IMPORTANT: Default password generated!\n\nNew Password: ' + secureDefault + '\n\nChange this immediately in admin dashboard!');
+  let loginAttempts = Number(sessionStorage.getItem("brainyLoginAttempts") || "0");
+  let lastAttemptTime = Number(sessionStorage.getItem("brainyLastAttemptTime") || "0");
+
+  if (!localStorage.getItem(ADMIN_PASSWORD_KEY)) {
+    const defaultPassword = "Brainy@" + Date.now().toString().slice(-6);
+    localStorage.setItem(ADMIN_PASSWORD_KEY, defaultPassword);
+    alert(
+      "IMPORTANT: Default admin password generated.\n\nUsername: admin\nPassword: " +
+        defaultPassword +
+        "\n\nChange it immediately from the admin dashboard."
+    );
+  }
+
+  window.logSecurityEvent = function (event, data = {}) {
+    try {
+      const logs = JSON.parse(localStorage.getItem("brainySecurityLogs") || "[]");
+      logs.push({
+        event,
+        data,
+        userAgent: navigator.userAgent.substring(0, 100),
+        timestamp: new Date().toISOString(),
+      });
+      if (logs.length > 100) logs.splice(0, logs.length - 100);
+      localStorage.setItem("brainySecurityLogs", JSON.stringify(logs));
+    } catch (error) {
+      console.error("Security log error:", error);
     }
-    
-    // Security logging
-    window.logSecurityEvent = function(event, data) {
-        try {
-            const logs = JSON.parse(localStorage.getItem('securityLogs') || '[]');
-            logs.push({
-                event: event,
-                data: data,
-                userAgent: navigator.userAgent.substring(0, 100),
-                timestamp: new Date().toISOString()
-            });
-            if (logs.length > 100) logs.splice(0, logs.length - 100);
-            localStorage.setItem('securityLogs', JSON.stringify(logs));
-        } catch (error) {
-            console.error('Error logging security event:', error);
-        }
-    };
-    
-    // Authentication functions
-    function checkAuth() {
-        if (!sessionStorage.getItem('adminLoggedIn')) {
-            showLoginPrompt();
-        } else {
-            checkSessionTimeout();
-        }
+  };
+
+  function authenticateUser(username, password) {
+    return username === ADMIN_USERNAME && password === localStorage.getItem(ADMIN_PASSWORD_KEY);
+  }
+
+  function redirectToHome() {
+    window.location.href = "index.html";
+  }
+
+  function checkSessionTimeout() {
+    const loginTime = Number(sessionStorage.getItem("brainyAdminLoginTime") || "0");
+    if (!loginTime) return;
+
+    if (Date.now() - loginTime > SESSION_TIMEOUT) {
+      sessionStorage.removeItem("brainyAdminLoggedIn");
+      sessionStorage.removeItem("brainyAdminLoginTime");
+      alert("Session expired. Please login again.");
+      showLoginPrompt();
     }
-    
-    function showLoginPrompt() {
-        const now = Date.now();
-        
-        if (loginAttempts >= MAX_ATTEMPTS) {
-            const timeSinceLastAttempt = now - lastAttemptTime;
-            if (timeSinceLastAttempt < LOCKOUT_TIME) {
-                const remainingTime = Math.ceil((LOCKOUT_TIME - timeSinceLastAttempt) / 1000);
-                alert(`🔒 Too many failed attempts!\nPlease wait ${remainingTime} seconds.`);
-                redirectToHome();
-                return;
-            } else {
-                loginAttempts = 0;
-            }
-        }
-        
-        const username = prompt('🔐 Cyber Hero Admin Login\n\nUsername:');
-        if (username === null) {
-            redirectToHome();
-            return;
-        }
-        
-        const password = prompt('🔐 Cyber Hero Admin Login\n\nPassword:');
-        if (password === null) {
-            redirectToHome();
-            return;
-        }
-        
-        if (authenticateUser(username, password)) {
-            loginAttempts = 0;
-            sessionStorage.setItem('adminLoggedIn', 'true');
-            sessionStorage.setItem('adminLoginTime', now.toString());
-            logSecurityEvent('LOGIN_SUCCESS', { username: username, timestamp: now });
-            alert('✅ Welcome to Cyber Hero Admin Dashboard!');
-        } else {
-            loginAttempts++;
-            lastAttemptTime = now;
-            const remaining = MAX_ATTEMPTS - loginAttempts;
-            
-            logSecurityEvent('LOGIN_FAILED', { 
-                username: username, 
-                attempts: loginAttempts, 
-                timestamp: now 
-            });
-            
-            if (remaining > 0) {
-                alert(`❌ Invalid credentials!\n\nAttempts remaining: ${remaining}`);
-                showLoginPrompt();
-            } else {
-                alert(`❌ Maximum login attempts exceeded!`);
-                redirectToHome();
-            }
-        }
+  }
+
+  function showLoginPrompt() {
+    const now = Date.now();
+
+    if (loginAttempts >= MAX_ATTEMPTS && now - lastAttemptTime < LOCKOUT_TIME) {
+      const remaining = Math.ceil((LOCKOUT_TIME - (now - lastAttemptTime)) / 1000);
+      alert("Too many failed attempts. Please wait " + remaining + " seconds.");
+      redirectToHome();
+      return;
     }
-    
-    function authenticateUser(username, password) {
-        const storedPassword = localStorage.getItem(ADMIN_PASSWORD_KEY);
-        if (!storedPassword) return false;
-        return username === ADMIN_USERNAME && password === storedPassword;
-    }
-    
-    function checkSessionTimeout() {
-        const loginTime = sessionStorage.getItem('adminLoginTime');
-        if (loginTime) {
-            const now = Date.now();
-            const sessionAge = now - parseInt(loginTime);
-            
-            if (sessionAge > SESSION_TIMEOUT) {
-                sessionStorage.removeItem('adminLoggedIn');
-                sessionStorage.removeItem('adminLoginTime');
-                alert('🕒 Session expired. Please login again.');
-                showLoginPrompt();
-            }
-        }
-    }
-    
-    function redirectToHome() {
-        window.location.href = 'index.html';
-    }
-    
-    window.adminLogout = function() {
-        if (confirm('Are you sure you want to logout?')) {
-            sessionStorage.removeItem('adminLoggedIn');
-            sessionStorage.removeItem('adminLoginTime');
-            logSecurityEvent('LOGOUT', { timestamp: Date.now() });
-            alert('👋 Logged out successfully!');
-            window.location.href = 'index.html';
-        }
-    };
-    
-    // Check auth on admin pages
-    if (window.location.pathname.includes('admin.html')) {
-        checkAuth();
-        setInterval(checkSessionTimeout, 5 * 60 * 1000);
-    }
-    
-    // Password Reset System - FIXED VERSION
-    function initPasswordReset() {
-        console.log('🚀 Initializing password reset system...');
-        
-        // Toggle button handler
-        const toggleBtn = document.getElementById('change-password-toggle');
-        if (toggleBtn) {
-            // Remove existing handlers first
-            toggleBtn.replaceWith(toggleBtn.cloneNode(true));
-            const newToggleBtn = document.getElementById('change-password-toggle');
-            
-            newToggleBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const section = document.getElementById('password-reset-section');
-                if (section) {
-                    section.classList.toggle('hidden');
-                    console.log('✅ Password reset section toggled');
-                    
-                    // Initialize reset button handler after section is shown
-                    if (!section.classList.contains('hidden')) {
-                        setTimeout(initResetHandler, 100);
-                    }
-                }
-            });
-            console.log('✅ Toggle button handler attached');
-        }
-        
-        // Initialize reset handler immediately if section is visible
-        const section = document.getElementById('password-reset-section');
-        if (section && !section.classList.contains('hidden')) {
-            initResetHandler();
-        }
-    }
-    
-    function initResetHandler() {
-        const resetBtn = document.getElementById('reset-password-btn');
-        if (resetBtn && !resetBtn.dataset.handlerAttached) {
-            resetBtn.dataset.handlerAttached = 'true';
-            
-            resetBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                console.log('🔐 Password reset button clicked!');
-                
-                const currentPass = document.getElementById('current-password')?.value?.trim();
-                const newPass = document.getElementById('new-password')?.value?.trim();
-                const confirmPass = document.getElementById('confirm-password')?.value?.trim();
-                const messageDiv = document.getElementById('password-message');
-                
-                // Clear previous messages
-                if (messageDiv) messageDiv.textContent = '';
-                
-                // Validation
-                if (!currentPass || !newPass || !confirmPass) {
-                    alert('❌ All fields are required!');
-                    return;
-                }
-                
-                const storedPassword = localStorage.getItem('adminPassword');
-                if (!storedPassword) {
-                    alert('❌ No admin password found!');
-                    return;
-                }
-                
-                if (currentPass !== storedPassword) {
-                    alert('❌ Current password is incorrect!');
-                    return;
-                }
-                
-                if (newPass !== confirmPass) {
-                    alert('❌ New passwords do not match!');
-                    return;
-                }
-                
-                if (newPass.length < 8) {
-                    alert('❌ Password must be at least 8 characters!');
-                    return;
-                }
-                
-                // Update password
-                localStorage.setItem('adminPassword', newPass);
-                alert('✅ Password updated successfully!\n\nNew password is now active.');
-                
-                // Log security event
-                logSecurityEvent('PASSWORD_CHANGED', { 
-                    timestamp: new Date().toISOString() 
-                });
-                
-                // Clear and hide form
-                document.getElementById('current-password').value = '';
-                document.getElementById('new-password').value = '';
-                document.getElementById('confirm-password').value = '';
-                document.getElementById('password-reset-section').classList.add('hidden');
-                
-                console.log('✅ Password changed successfully');
-            });
-            console.log('✅ Password reset handler attached');
-        }
-        
-        // Cancel button
-        const cancelBtn = document.getElementById('cancel-password-reset');
-        if (cancelBtn && !cancelBtn.dataset.handlerAttached) {
-            cancelBtn.dataset.handlerAttached = 'true';
-            cancelBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                document.getElementById('password-reset-section').classList.add('hidden');
-                document.getElementById('current-password').value = '';
-                document.getElementById('new-password').value = '';
-                document.getElementById('confirm-password').value = '';
-            });
-        }
-    }
-    
-    // Initialize password reset when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initPasswordReset);
+
+    if (now - lastAttemptTime >= LOCKOUT_TIME) loginAttempts = 0;
+
+    const username = prompt("Brainy Tuition Admin Login\n\nUsername:");
+    if (username === null) return redirectToHome();
+
+    const password = prompt("Brainy Tuition Admin Login\n\nPassword:");
+    if (password === null) return redirectToHome();
+
+    if (authenticateUser(username.trim(), password)) {
+      loginAttempts = 0;
+      sessionStorage.setItem("brainyLoginAttempts", "0");
+      sessionStorage.setItem("brainyAdminLoggedIn", "true");
+      sessionStorage.setItem("brainyAdminLoginTime", now.toString());
+      logSecurityEvent("LOGIN_SUCCESS", { username });
+      alert("Welcome to Brainy Tuition Admin Dashboard!");
     } else {
-        initPasswordReset();
+      loginAttempts++;
+      lastAttemptTime = now;
+      sessionStorage.setItem("brainyLoginAttempts", String(loginAttempts));
+      sessionStorage.setItem("brainyLastAttemptTime", String(lastAttemptTime));
+      logSecurityEvent("LOGIN_FAILED", { username, attempts: loginAttempts });
+
+      const remaining = MAX_ATTEMPTS - loginAttempts;
+      if (remaining > 0) {
+        alert("Invalid credentials. Attempts remaining: " + remaining);
+        showLoginPrompt();
+      } else {
+        alert("Maximum login attempts exceeded.");
+        redirectToHome();
+      }
     }
-    
-    // Backup initialization
-    window.addEventListener('load', function() {
-        setTimeout(initPasswordReset, 500);
-    });
-    
+  }
+
+  function checkAuth() {
+    if (!sessionStorage.getItem("brainyAdminLoggedIn")) {
+      showLoginPrompt();
+    } else {
+      checkSessionTimeout();
+    }
+  }
+
+  window.adminLogout = function () {
+    if (!confirm("Logout from admin panel?")) return;
+    sessionStorage.removeItem("brainyAdminLoggedIn");
+    sessionStorage.removeItem("brainyAdminLoginTime");
+    logSecurityEvent("LOGOUT");
+    window.location.href = "index.html";
+  };
+
+  function initPasswordReset() {
+    const toggleBtn = document.getElementById("change-password-toggle");
+    const section = document.getElementById("password-reset-section");
+    const resetBtn = document.getElementById("reset-password-btn");
+    const cancelBtn = document.getElementById("cancel-password-reset");
+
+    if (toggleBtn && section) {
+      toggleBtn.addEventListener("click", () => section.classList.toggle("hidden"));
+    }
+
+    if (cancelBtn && section) {
+      cancelBtn.addEventListener("click", () => {
+        section.classList.add("hidden");
+        ["current-password", "new-password", "confirm-password"].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.value = "";
+        });
+      });
+    }
+
+    if (resetBtn) {
+      resetBtn.addEventListener("click", () => {
+        const currentPass = document.getElementById("current-password")?.value || "";
+        const newPass = document.getElementById("new-password")?.value || "";
+        const confirmPass = document.getElementById("confirm-password")?.value || "";
+
+        if (!currentPass || !newPass || !confirmPass) return alert("All password fields are required.");
+        if (currentPass !== localStorage.getItem(ADMIN_PASSWORD_KEY)) return alert("Current password is incorrect.");
+        if (newPass !== confirmPass) return alert("New passwords do not match.");
+        if (newPass.length < 8) return alert("Password must be at least 8 characters.");
+
+        localStorage.setItem(ADMIN_PASSWORD_KEY, newPass);
+        logSecurityEvent("PASSWORD_CHANGED");
+        alert("Password updated successfully.");
+        section?.classList.add("hidden");
+      });
+    }
+  }
+
+  if (window.location.pathname.includes("admin.html")) {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", () => {
+        checkAuth();
+        initPasswordReset();
+      });
+    } else {
+      checkAuth();
+      initPasswordReset();
+    }
+    setInterval(checkSessionTimeout, 5 * 60 * 1000);
+  }
 })();

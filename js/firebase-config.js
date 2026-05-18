@@ -1,370 +1,238 @@
-// ===== js/firebase-config.js (COMPLETE CORRECTED VERSION) =====
-const originalLog = console.log;
-const ENABLE_LOGS = true; // Set to true for debugging, false for production
+// ===== js/firebase-config.js - Brainy Tuition Classes =====
+const ENABLE_LOGS = true;
 
-console.log = function(...args) {
-    if (ENABLE_LOGS) {
-        originalLog.apply(console, args);
-    }
-};
-
-// Firebase Configuration
+// Paste your Firebase web app config here.
+// API key is not a password, but Firestore rules must still be protected.
 const firebaseConfig = {
-  apiKey: "AIzaSyB_U2oT1LJJJgnsle-hV6_dnliMBPtJuaE",
-  authDomain: "i-m-cyber-hero.firebaseapp.com",
-  projectId: "i-m-cyber-hero",
-  storageBucket: "i-m-cyber-hero.firebasestorage.app",
-  messagingSenderId: "96269136485",
-  appId: "1:96269136485:web:fd378d60a6f56752ed4c8c"
+  apiKey: "AIzaSyBkglZbsLahltZNLVopO9zYr9fdmE_kGXA",
+  authDomain: "brainy-4bbad.firebaseapp.com",
+  projectId: "brainy-4bbad",
+  storageBucket: "brainy-4bbad.firebasestorage.app",
+  messagingSenderId: "247500665061",
+  appId: "1:247500665061:web:656992fbc4e0fe95b0a40c",
+  measurementId: "G-6NCVR24SH7"
 };
 
-// Initialize Firebase
-try {
-    firebase.initializeApp(firebaseConfig);
-    console.log('🔥 Firebase app initialized successfully!');
-} catch (error) {
-    console.error('Firebase initialization error:', error);
+function log(...args) {
+  if (ENABLE_LOGS) console.log(...args);
 }
 
-// Initialize Services
-let db, auth;
 try {
-    db = firebase.firestore();
-    auth = firebase.auth();
-    console.log('✅ Firebase services initialized');
+  firebase.initializeApp(firebaseConfig);
+  log("Firebase initialized for Brainy Tuition Classes.");
 } catch (error) {
-    console.error('Firebase services initialization error:', error);
+  console.error("Firebase initialization error:", error);
 }
 
-// Enhanced FirebaseHelper with proper update/create logic
+let db;
+let auth;
+
+try {
+  db = firebase.firestore();
+  auth = firebase.auth();
+} catch (error) {
+  console.error("Firebase services error:", error);
+}
+
+const LOCAL_QUIZZES_KEY = "brainyQuizzes";
+const LOCAL_RESULTS_KEY = "brainyQuizResults";
+
 const FirebaseHelper = {
-    // FIXED: Save quiz with proper create vs update handling
-    async saveQuiz(quiz) {
-        console.log('💾 Saving quiz:', quiz.title);
-        console.log('🔍 Quiz ID:', quiz.id);
-        
-        // Validate quiz data first
-        if (!quiz.title || !quiz.questions || quiz.questions.length === 0) {
-            throw new Error('Invalid quiz data: title and questions are required');
-        }
-        
-        try {
-            const quizData = {
-                title: quiz.title.trim(),
-                thumbnail: quiz.thumbnail || 'https://via.placeholder.com/300x200?text=Quiz',
-                questions: quiz.questions,
-                createdBy: 'admin'
-            };
-            
-            if (quiz.id && quiz.id !== 'undefined') {
-                // UPDATE EXISTING QUIZ
-                console.log('🔄 Updating existing quiz in Firebase:', quiz.id);
-                
-                // Add update timestamp
-                quizData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
-                
-                // Use set with merge to update existing document
-                await db.collection('quizzes').doc(quiz.id).set(quizData, { merge: true });
-                console.log('✅ Quiz updated in Firebase successfully!');
-                return { success: true, method: 'updated', id: quiz.id };
-                
-            } else {
-                // CREATE NEW QUIZ
-                console.log('➕ Creating new quiz in Firebase');
-                
-                // Add creation timestamp
-                quizData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-                
-                // Use add() for new documents
-                const docRef = await db.collection('quizzes').add(quizData);
-                console.log('✅ Quiz created in Firebase with ID:', docRef.id);
-                return { success: true, method: 'created', id: docRef.id };
-            }
-            
-        } catch (error) {
-            console.log('⚠️ Firebase save failed, using localStorage backup:', error.message);
-            return this.saveQuizLocal(quiz);
-        }
-    },
-
-    // FIXED: Save quiz to localStorage with proper update logic
-    saveQuizLocal(quiz) {
-        try {
-            const quizzes = JSON.parse(localStorage.getItem('cyberHeroQuizzes') || '[]');
-            
-            if (quiz.id && quiz.id !== 'undefined') {
-                // UPDATE EXISTING QUIZ
-                console.log('🔄 Updating existing quiz in localStorage:', quiz.id);
-                
-                const existingIndex = quizzes.findIndex(q => q.id === quiz.id);
-                if (existingIndex >= 0) {
-                    // Keep original creation info, add update info
-                    const existingQuiz = quizzes[existingIndex];
-                    const updatedQuiz = {
-                        ...quiz,
-                        id: quiz.id,
-                        title: quiz.title.trim(),
-                        thumbnail: quiz.thumbnail || 'https://via.placeholder.com/300x200?text=Quiz',
-                        questions: quiz.questions,
-                        createdAt: existingQuiz.createdAt || new Date().toISOString(),
-                        updatedAt: new Date().toISOString(),
-                        createdBy: 'admin'
-                    };
-                    
-                    quizzes[existingIndex] = updatedQuiz;
-                    console.log('✅ Quiz updated in localStorage');
-                } else {
-                    console.log('⚠️ Quiz not found in localStorage, adding as new');
-                    const newQuiz = {
-                        ...quiz,
-                        id: quiz.id,
-                        title: quiz.title.trim(),
-                        thumbnail: quiz.thumbnail || 'https://via.placeholder.com/300x200?text=Quiz',
-                        questions: quiz.questions,
-                        createdAt: new Date().toISOString(),
-                        createdBy: 'admin'
-                    };
-                    quizzes.push(newQuiz);
-                }
-            } else {
-                // CREATE NEW QUIZ
-                console.log('➕ Creating new quiz in localStorage');
-                const newQuiz = {
-                    id: Date.now().toString(),
-                    title: quiz.title.trim(),
-                    thumbnail: quiz.thumbnail || 'https://via.placeholder.com/300x200?text=Quiz',
-                    questions: quiz.questions,
-                    createdAt: new Date().toISOString(),
-                    createdBy: 'admin'
-                };
-                quizzes.push(newQuiz);
-            }
-            
-            localStorage.setItem('cyberHeroQuizzes', JSON.stringify(quizzes));
-            console.log('✅ Quiz saved to localStorage successfully');
-            return { success: true, method: 'localStorage' };
-            
-        } catch (error) {
-            console.error('❌ Failed to save quiz locally:', error);
-            return { success: false, error: error.message };
-        }
-    },
-
-    // Get all quizzes with fallback
-    async getQuizzes() {
-        console.log('📊 Loading quizzes...');
-        
-        try {
-            // Try Firebase first
-            const snapshot = await db.collection('quizzes')
-                .orderBy('createdAt', 'desc')
-                .get();
-            
-            if (!snapshot.empty) {
-                const firebaseQuizzes = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                    createdAt: doc.data().createdAt?.toDate()?.toISOString() || new Date().toISOString()
-                }));
-                
-                console.log(`✅ Loaded ${firebaseQuizzes.length} quizzes from Firebase`);
-                return firebaseQuizzes;
-            }
-        } catch (error) {
-            console.log('⚠️ Firebase load failed, using localStorage:', error.message);
-        }
-        
-        // Use localStorage
-        const localQuizzes = JSON.parse(localStorage.getItem('cyberHeroQuizzes') || '[]');
-        console.log(`✅ Loaded ${localQuizzes.length} quizzes from localStorage`);
-        return localQuizzes;
-    },
-
-    // Delete quiz
-    async deleteQuiz(quizId) {
-        try {
-            // Try Firebase first
-            await db.collection('quizzes').doc(quizId).delete();
-            console.log('✅ Quiz deleted from Firebase');
-        } catch (error) {
-            console.log('⚠️ Firebase delete failed:', error.message);
-        }
-        
-        // Always delete from localStorage too
-        const quizzes = JSON.parse(localStorage.getItem('cyberHeroQuizzes') || '[]');
-        const filteredQuizzes = quizzes.filter(q => q.id !== quizId);
-        localStorage.setItem('cyberHeroQuizzes', JSON.stringify(filteredQuizzes));
-        console.log('✅ Quiz deleted from localStorage');
-    },
-
-    // Get quiz by ID
-    async getQuizById(quizId) {
-        try {
-            // Try Firebase first
-            const doc = await db.collection('quizzes').doc(quizId).get();
-            if (doc.exists) {
-                return {
-                    id: doc.id,
-                    ...doc.data()
-                };
-            }
-        } catch (error) {
-            console.log('⚠️ Firebase getById failed, checking localStorage');
-        }
-        
-        // Check localStorage
-        const quizzes = JSON.parse(localStorage.getItem('cyberHeroQuizzes') || '[]');
-        const quiz = quizzes.find(q => q.id === quizId);
-        if (quiz) {
-            return quiz;
-        }
-        
-        throw new Error('Quiz not found');
-    },
-
-    // Save quiz result with fallback
-    async saveQuizResult(result) {
-        const sanitizedResult = {
-            userName: result.userName.trim(),
-            quizId: result.quizId || 'quiz_' + Date.now(),
-            quizTitle: result.quizTitle,
-            score: parseInt(result.score),
-            totalQuestions: parseInt(result.totalQuestions),
-            percentage: Math.round(result.percentage),
-            completedAt: new Date().toISOString(),
-            userAgent: navigator.userAgent.substring(0, 200)
-        };
-        
-        try {
-            // Try Firebase first
-            sanitizedResult.timestamp = firebase.firestore.FieldValue.serverTimestamp();
-            await db.collection('quizResults').add(sanitizedResult);
-            console.log('✅ Result saved to Firebase successfully!');
-            
-        } catch (error) {
-            console.log('⚠️ Firebase save failed, using localStorage backup');
-            this.saveResultLocal(sanitizedResult);
-        }
-    },
-
-    // Save result to localStorage
-    saveResultLocal(result) {
-        try {
-            const results = JSON.parse(localStorage.getItem('cyberHeroResults') || '[]');
-            result.id = Date.now().toString();
-            result.timestamp = new Date().toISOString();
-            results.push(result);
-            localStorage.setItem('cyberHeroResults', JSON.stringify(results));
-            console.log('✅ Result saved to localStorage successfully!');
-        } catch (error) {
-            console.error('❌ Failed to save result locally:', error);
-        }
-    },
-
-    // Get quiz results with fallback
-    async getQuizResults() {
-        try {
-            // Try Firebase first
-            const snapshot = await db.collection('quizResults')
-                .orderBy('timestamp', 'desc')
-                .get();
-            
-            if (!snapshot.empty) {
-                const firebaseResults = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                    timestamp: doc.data().timestamp?.toDate()?.toISOString() || new Date().toISOString()
-                }));
-                
-                console.log(`✅ Loaded ${firebaseResults.length} results from Firebase`);
-                return firebaseResults;
-            }
-        } catch (error) {
-            console.log('⚠️ Firebase results load failed, using localStorage');
-        }
-        
-        // Use localStorage
-        const localResults = JSON.parse(localStorage.getItem('cyberHeroResults') || '[]');
-        console.log(`✅ Loaded ${localResults.length} results from localStorage`);
-        return localResults;
-    },
-
-    // Clear all results
-    async clearAllResults() {
-        try {
-            // Try Firebase first
-            const snapshot = await db.collection('quizResults').get();
-            if (!snapshot.empty) {
-                const batch = db.batch();
-                snapshot.docs.forEach(doc => batch.delete(doc.ref));
-                await batch.commit();
-                console.log('✅ Firebase results cleared');
-            }
-        } catch (error) {
-            console.log('⚠️ Firebase clear failed:', error.message);
-        }
-        
-        // Clear localStorage
-        localStorage.removeItem('cyberHeroResults');
-        console.log('✅ localStorage results cleared');
-        return true;
-    },
-
-    // Rate limiting
-    rateLimitMap: new Map(),
-    
-    checkRateLimit(action, limit = 5) {
-        const now = Date.now();
-        const key = `${action}_${Math.floor(now / 60000)}`;
-        const count = this.rateLimitMap.get(key) || 0;
-        
-        if (count >= limit) {
-            throw new Error('Rate limit exceeded. Please wait a moment.');
-        }
-        
-        this.rateLimitMap.set(key, count + 1);
-        
-        // Clean old entries
-        for (const [mapKey] of this.rateLimitMap) {
-            if (parseInt(mapKey.split('_')[1]) < Math.floor(now / 60000) - 5) {
-                this.rateLimitMap.delete(mapKey);
-            }
-        }
-    },
-
-    // Connection test
-    testConnection() {
-        try {
-            if (db && typeof db.collection === 'function') {
-                console.log('✅ Firebase connection successful!');
-                return true;
-            } else {
-                console.log('⚠️ Firebase not available, using localStorage only');
-                return false;
-            }
-        } catch (error) {
-            console.log('⚠️ Firebase connection failed:', error.message);
-            return false;
-        }
+  async ensureAnonymousAuth() {
+    try {
+      if (!auth) return null;
+      if (auth.currentUser) return auth.currentUser;
+      const credential = await auth.signInAnonymously();
+      return credential.user;
+    } catch (error) {
+      console.warn("Anonymous auth failed. Falling back to localStorage.", error.message);
+      return null;
     }
+  },
+
+  cleanQuiz(quiz) {
+    return {
+      title: String(quiz.title || "").trim(),
+      standard: String(quiz.standard || "").trim(),
+      board: String(quiz.board || "SSC Maharashtra Board").trim(),
+      thumbnail: quiz.thumbnail || "",
+      timePerQuestion: Number(quiz.timePerQuestion || 35),
+      maxAttempts: Number(quiz.maxAttempts || 3),
+      questions: Array.isArray(quiz.questions) ? quiz.questions : [],
+      createdBy: "admin",
+    };
+  },
+
+  async saveQuiz(quiz) {
+    const quizData = this.cleanQuiz(quiz);
+
+    if (!quizData.title || !quizData.standard || quizData.questions.length === 0) {
+      throw new Error("Quiz title, standard, and questions are required.");
+    }
+
+    try {
+      await this.ensureAnonymousAuth();
+
+      if (quiz.id) {
+        quizData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+        await db.collection("quizzes").doc(quiz.id).set(quizData, { merge: true });
+        return { success: true, method: "updated", id: quiz.id };
+      }
+
+      quizData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      const docRef = await db.collection("quizzes").add(quizData);
+      return { success: true, method: "created", id: docRef.id };
+    } catch (error) {
+      console.warn("Firebase save failed. Using localStorage.", error.message);
+      return this.saveQuizLocal({ ...quizData, id: quiz.id });
+    }
+  },
+
+  saveQuizLocal(quiz) {
+    const quizzes = JSON.parse(localStorage.getItem(LOCAL_QUIZZES_KEY) || "[]");
+    const quizToSave = {
+      ...quiz,
+      id: quiz.id || Date.now().toString(),
+      createdAt: quiz.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const index = quizzes.findIndex((q) => q.id === quizToSave.id);
+    if (index >= 0) quizzes[index] = quizToSave;
+    else quizzes.push(quizToSave);
+
+    localStorage.setItem(LOCAL_QUIZZES_KEY, JSON.stringify(quizzes));
+    return { success: true, method: "localStorage", id: quizToSave.id };
+  },
+
+  async getQuizzes() {
+    try {
+      await this.ensureAnonymousAuth();
+      const snapshot = await db.collection("quizzes").orderBy("createdAt", "desc").get();
+
+      if (!snapshot.empty) {
+        return snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            createdAt: data.createdAt?.toDate?.().toISOString?.() || data.createdAt || "",
+            updatedAt: data.updatedAt?.toDate?.().toISOString?.() || data.updatedAt || "",
+          };
+        });
+      }
+    } catch (error) {
+      console.warn("Firebase quiz load failed. Using localStorage.", error.message);
+    }
+
+    return JSON.parse(localStorage.getItem(LOCAL_QUIZZES_KEY) || "[]");
+  },
+
+  async deleteQuiz(quizId) {
+    try {
+      await this.ensureAnonymousAuth();
+      await db.collection("quizzes").doc(quizId).delete();
+    } catch (error) {
+      console.warn("Firebase quiz delete failed.", error.message);
+    }
+
+    const quizzes = JSON.parse(localStorage.getItem(LOCAL_QUIZZES_KEY) || "[]");
+    localStorage.setItem(LOCAL_QUIZZES_KEY, JSON.stringify(quizzes.filter((q) => q.id !== quizId)));
+  },
+
+  async getQuizById(quizId) {
+    try {
+      await this.ensureAnonymousAuth();
+      const doc = await db.collection("quizzes").doc(quizId).get();
+      if (doc.exists) return { id: doc.id, ...doc.data() };
+    } catch (error) {
+      console.warn("Firebase getQuizById failed.", error.message);
+    }
+
+    const quizzes = JSON.parse(localStorage.getItem(LOCAL_QUIZZES_KEY) || "[]");
+    const quiz = quizzes.find((q) => q.id === quizId);
+    if (!quiz) throw new Error("Quiz not found.");
+    return quiz;
+  },
+
+  async saveQuizResult(result) {
+    const sanitizedResult = {
+      userName: String(result.userName || "").trim(),
+      schoolName: String(result.schoolName || "").trim(),
+      standard: String(result.standard || "").trim(),
+      quizId: String(result.quizId || ""),
+      quizTitle: String(result.quizTitle || ""),
+      score: Number(result.score || 0),
+      totalQuestions: Number(result.totalQuestions || 0),
+      percentage: Math.round(Number(result.percentage || 0)),
+      attemptNumber: Number(result.attemptNumber || 1),
+      completedAt: new Date().toISOString(),
+      userAgent: navigator.userAgent.substring(0, 160),
+    };
+
+    try {
+      await this.ensureAnonymousAuth();
+      sanitizedResult.timestamp = firebase.firestore.FieldValue.serverTimestamp();
+      await db.collection("quizResults").add(sanitizedResult);
+      return { success: true, method: "firebase" };
+    } catch (error) {
+      console.warn("Firebase result save failed. Using localStorage.", error.message);
+      return this.saveResultLocal(sanitizedResult);
+    }
+  },
+
+  saveResultLocal(result) {
+    const results = JSON.parse(localStorage.getItem(LOCAL_RESULTS_KEY) || "[]");
+    results.push({ ...result, id: Date.now().toString(), timestamp: new Date().toISOString() });
+    localStorage.setItem(LOCAL_RESULTS_KEY, JSON.stringify(results));
+    return { success: true, method: "localStorage" };
+  },
+
+  async getQuizResults() {
+    try {
+      await this.ensureAnonymousAuth();
+      const snapshot = await db.collection("quizResults").orderBy("timestamp", "desc").get();
+
+      if (!snapshot.empty) {
+        return snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            timestamp: data.timestamp?.toDate?.().toISOString?.() || data.timestamp || "",
+          };
+        });
+      }
+    } catch (error) {
+      console.warn("Firebase results load failed. Using localStorage.", error.message);
+    }
+
+    return JSON.parse(localStorage.getItem(LOCAL_RESULTS_KEY) || "[]");
+  },
+
+  async clearAllResults() {
+    try {
+      await this.ensureAnonymousAuth();
+
+      while (true) {
+        const snapshot = await db.collection("quizResults").limit(100).get();
+        if (snapshot.empty) break;
+
+        const batch = db.batch();
+        snapshot.docs.forEach((doc) => batch.delete(doc.ref));
+        await batch.commit();
+
+        if (snapshot.size < 100) break;
+      }
+    } catch (error) {
+      console.warn("Firebase clear failed.", error.message);
+    }
+
+    localStorage.removeItem(LOCAL_RESULTS_KEY);
+    return true;
+  },
 };
 
-// Test connection and initialize
-const isFirebaseConnected = FirebaseHelper.testConnection();
-if (isFirebaseConnected) {
-    console.log('🔥 Firebase initialized and connected successfully!');
-} else {
-    console.log('📱 Running in localStorage mode - all functionality preserved!');
-}
-
-// Make globally available
 window.FirebaseHelper = FirebaseHelper;
 window.db = db;
 window.auth = auth;
-
-// Export for modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { FirebaseHelper, db, auth };
-}
-
-console.log('🎯 Cyber Hero Firebase configuration complete!');

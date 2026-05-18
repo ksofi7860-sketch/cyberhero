@@ -4,23 +4,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     const resultContainer = document.getElementById('result-container');
     const startQuizBtn = document.getElementById('start-quiz-btn');
     const userNameInput = document.getElementById('user-name');
+    const userStdInput = document.getElementById('user-std');
 
     const urlParams = new URLSearchParams(window.location.search);
     const quizIndex = parseInt(urlParams.get('quiz'));
-    
+
     let quizzes = [];
     let quiz = null;
     let currentQuestionIndex = 0;
     let score = 0;
     let userName = '';
+    let userStd = '';
 
-    // Load quizzes from Firebase
+    let timerId = null;
+    const QUESTION_TIME = 35;
+    let timeLeft = QUESTION_TIME;
+
+    const MAX_ATTEMPTS = 3;
+
     try {
         quizzes = await FirebaseHelper.getQuizzes();
         quiz = quizzes[quizIndex];
-        
+
         if (!quiz) {
-            document.body.innerHTML = '<h1>Quiz not found!</h1>';
+            document.body.innerHTML = '<div class="error-msg"><h1>Quiz not found!</h1><a href="index.html">Back to Home</a></div>';
             return;
         }
     } catch (error) {
@@ -31,220 +38,285 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     startQuizBtn.addEventListener('click', () => {
         userName = userNameInput.value.trim();
-        if (userName) {
-            userNameContainer.classList.add('hidden');
-            quizContainer.classList.remove('hidden');
-            displayQuestion();
-        } else {
-            alert('Please enter your name.');
+        userStd = userStdInput.value;
+
+        if (!userName || !userStd) {
+            alert('Please enter your name and select your Standard (5-9).');
+            return;
         }
+
+        const attemptKey = getAttemptKey(userName, userStd, quiz.id);
+        const attemptsUsed = parseInt(localStorage.getItem(attemptKey) || '0', 10);
+
+        if (attemptsUsed >= MAX_ATTEMPTS) {
+            alert('You have already used all 3 attempts for this quiz.');
+            return;
+        }
+
+        userNameContainer.classList.add('hidden');
+        quizContainer.classList.remove('hidden');
+        currentQuestionIndex = 0;
+        score = 0;
+        displayQuestion();
     });
 
+    function getAttemptKey(name, std, quizId) {
+        return `brainy_attempt_${name.toLowerCase().replace(/\s+/g, '_')}_${std}_${quizId}`;
+    }
+
+    function clearQuestionTimer() {
+        if (timerId) {
+            clearInterval(timerId);
+            timerId = null;
+        }
+    }
+
+    function getAttemptsUsed() {
+        const attemptKey = getAttemptKey(userName, userStd, quiz.id);
+        return parseInt(localStorage.getItem(attemptKey) || '0', 10);
+    }
+
+    function incrementAttempts() {
+        const attemptKey = getAttemptKey(userName, userStd, quiz.id);
+        const attemptsUsed = getAttemptsUsed();
+        localStorage.setItem(attemptKey, attemptsUsed + 1);
+    }
+
     function displayQuestion() {
-        if (currentQuestionIndex < quiz.questions.length) {
-            const question = quiz.questions[currentQuestionIndex];
-            
-            // BUILD HTML WITH IMAGE SUPPORT
-            let questionHTML = `
-                <div class="quiz-content">
-                    <div class="question-counter">Question ${currentQuestionIndex + 1} of ${quiz.questions.length}</div>
-                    <h2 class="question-title">${question.question}</h2>
-            `;
-            
-            // ADD IMAGE/GIF IF PROVIDED
-            if (question.imageUrl && question.imageUrl.trim() !== '') {
-                questionHTML += `
-                    <div class="question-image-container">
-                        <img id="question-image" src="${question.imageUrl}" alt="Question illustration" 
-                             style="max-width: 100%; max-height: 300px; border-radius: 12px; margin: 20px 0; display: block;"
-                             onerror="this.style.display='none';">
+        clearQuestionTimer();
+
+        if (currentQuestionIndex >= quiz.questions.length) {
+            showResult();
+            return;
+        }
+
+        const question = quiz.questions[currentQuestionIndex];
+        const attemptsLeft = MAX_ATTEMPTS - getAttemptsUsed();
+
+        let questionHTML = `
+            <div class="quiz-content">
+                <div class="question-header">
+                    <div class="question-counter">
+                        Std ${userStd} | Question ${currentQuestionIndex + 1} of ${quiz.questions.length}
                     </div>
-                `;
-            }
-            
-            // ADD OPTIONS
-            questionHTML += `
-                    <div class="options-container">
-                        ${question.options.map((option, index) => `
-                            <div class="option-card" data-correct="${index === question.answer}">
-                                ${option}
-                            </div>
-                        `).join('')}
+                    <div class="timer">
+                        Time left: <span id="timer-value">${QUESTION_TIME}</span>s
                     </div>
                 </div>
+
+                <div class="quiz-meta" style="margin: 10px 0 15px; color: #6a1b9a; font-weight: 600;">
+                    Attempts left: ${attemptsLeft} / ${MAX_ATTEMPTS} | Scholarship up to 15%
+                </div>
+
+                <h2 class="question-title">${question.question}</h2>
+        `;
+
+        if (question.imageUrl) {
+            questionHTML += `
+                <div class="question-image-container">
+                    <img id="question-image" src="${question.imageUrl}" alt="illustration" style="max-width: 100%; border-radius: 12px; margin: 15px 0;">
+                </div>
             `;
-            
-            quizContainer.innerHTML = questionHTML;
-        } else {
-            showResult();
         }
+
+        questionHTML += `
+                <div class="options-container">
+                    ${question.options.map((option, index) => `
+                        <div class="option-card" data-index="${index}" data-correct="${index === question.answer}">
+                            ${option}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+
+        quizContainer.innerHTML = questionHTML;
+
+        timeLeft = QUESTION_TIME;
+        const timerValueEl = document.getElementById('timer-value');
+
+        timerId = setInterval(() => {
+            timeLeft--;
+            if (timerValueEl) timerValueEl.textContent = timeLeft;
+
+            if (timeLeft <= 0) {
+                clearQuestionTimer();
+                handleTimeUp();
+            }
+        }, 1000);
+    }
+
+    function handleTimeUp() {
+        const optionCards = quizContainer.querySelectorAll('.option-card');
+        const question = quiz.questions[currentQuestionIndex];
+
+        optionCards.forEach((card, idx) => {
+            card.style.pointerEvents = 'none';
+            if (idx === question.answer) {
+                card.classList.add('correct');
+            }
+        });
+
+        setTimeout(() => {
+            currentQuestionIndex++;
+            displayQuestion();
+        }, 1000);
     }
 
     quizContainer.addEventListener('click', (e) => {
-        if (e.target.classList.contains('option-card')) {
-            document.querySelectorAll('.option-card').forEach(card => {
-                card.style.pointerEvents = 'none';
-                if (card.getAttribute('data-correct') === 'true') {
-                    card.classList.add('correct');
-                } else {
-                    card.classList.add('incorrect');
-                }
-            });
+        if (!e.target.classList.contains('option-card')) return;
 
-            if (e.target.getAttribute('data-correct') === 'true') {
-                score++;
-                e.target.classList.add('selected-correct');
-            } else {
-                e.target.classList.add('selected-incorrect');
+        const selectedCard = e.target;
+        const selectedIndex = parseInt(selectedCard.getAttribute('data-index'), 10);
+        const question = quiz.questions[currentQuestionIndex];
+
+        const alreadyLocked = selectedCard.parentElement.classList.contains('locked');
+        if (alreadyLocked) return;
+
+        clearQuestionTimer();
+
+        const optionCards = quizContainer.querySelectorAll('.option-card');
+        optionCards.forEach((card, idx) => {
+            card.style.pointerEvents = 'none';
+            if (idx === question.answer) {
+                card.classList.add('correct');
             }
+        });
 
-            setTimeout(() => {
-                currentQuestionIndex++;
-                displayQuestion();
-            }, 1500);
+        if (selectedIndex === question.answer) {
+            score++;
+            selectedCard.classList.add('selected-correct');
+        } else {
+            selectedCard.classList.add('selected-incorrect');
         }
+
+        selectedCard.parentElement.classList.add('locked');
+
+        setTimeout(() => {
+            currentQuestionIndex++;
+            displayQuestion();
+        }, 1000);
     });
 
     async function showResult() {
-    quizContainer.classList.add('hidden');
-    resultContainer.classList.remove('hidden');
-    
-    const percentage = Math.round((score / quiz.questions.length) * 100);
-    
-    // Save result to Firebase
-    await saveResult(userName, quiz.id, quiz.title, score, quiz.questions.length, percentage);
-    
-    let message = '';
-    let emoji = '';
-    let resultGif = '';
-    
-    // ENHANCED RESULT WITH GIFS BASED ON SCORE
-    if (percentage === 100) {
-        message = `Hurray ${userName}! You are a Cyber Hero! 🦸‍♂️`;
-        emoji = '🎉';
-        const perfectGifs = [
-            'https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif',
-            'https://media.giphy.com/media/26u4cqiYI30juCOGY/giphy.gif',
-            'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif'
-        ];
-        resultGif = perfectGifs[Math.floor(Math.random() * perfectGifs.length)];
-    } else if (percentage >= 80) {
-        message = `Excellent work ${userName}! You're a true Cyber Hero! 🎯`;
-        emoji = '🏆';
-        const excellentGifs = [
-            'https://media.giphy.com/media/3o7absbD7PbTFQa0c8/giphy.gif',
-            'https://media.giphy.com/media/26AHPxxnSw1L9T1rW/giphy.gif'
-        ];
-        resultGif = excellentGifs[Math.floor(Math.random() * excellentGifs.length)];
-    } else if (percentage >= 60) {
-        message = `Great job ${userName}! Keep learning! 🎊`;
-        emoji = '👏';
-        if (Math.random() < 0.6) {
-            resultGif = 'https://media.giphy.com/media/3o7abA4a0QCXtSxGN2/giphy.gif';
+        clearQuestionTimer();
+        incrementAttempts();
+
+        quizContainer.classList.add('hidden');
+        resultContainer.classList.remove('hidden');
+
+        const percentage = Math.round((score / quiz.questions.length) * 100);
+        const attemptsUsed = getAttemptsUsed();
+        const attemptsLeft = MAX_ATTEMPTS - attemptsUsed;
+
+        await saveResult(userName, userStd, quiz.id, quiz.title, score, quiz.questions.length, percentage);
+
+        try {
+            localStorage.setItem('justCompletedQuiz', JSON.stringify({
+                userName,
+                std: userStd,
+                percentage,
+                score,
+                totalQuestions: quiz.questions.length,
+                quizTitle: quiz.title
+            }));
+        } catch (e) {
+            console.warn('Could not store recent result in localStorage', e);
         }
-    } else {
-        message = `${userName}, keep practicing! You'll get there! 💪`;
-        emoji = '📚';
-    }
-    
-    // BUILD RESULT HTML WITH OPTIONAL GIF
-    let resultHTML = `
-        <div class="result-content">
-            <div class="result-emoji">${emoji}</div>
-    `;
-    
-    // ADD GIF IF AVAILABLE
-    if (resultGif && Math.random() < 0.8) {
-        resultHTML += `
-            <div id="result-gif-container">
-                <img src="${resultGif}" alt="Celebration" 
-                     style="max-width: 250px; height: auto; border-radius: 15px; margin: 20px 0;">
-            </div>
-        `;
-    }
-    
-    resultHTML += `
-            <h2>${message}</h2>
-            <div class="score-display">
-                <div class="score-circle">
-                    <span class="percentage">${percentage}%</span>
-                    <span class="score-text">${score}/${quiz.questions.length}</span>
+
+        const isQualified = percentage >= 80;
+
+        let message = '';
+        let resultBoxHTML = '';
+
+        if (isQualified) {
+            message = `Excellent work, ${userName}!`;
+            resultBoxHTML = `
+                <div class="discount-box" style="background: #f3e8ff; border: 2px dashed #7b1fa2; padding: 20px; border-radius: 15px; margin: 20px 0;">
+                    <h3 style="color: #6a1b9a; margin-top: 0;">🎓 Scholarship Opportunity Unlocked!</h3>
+                    <p>You scored ${percentage}% and are eligible for up to <strong>15% scholarship</strong> on admission at Brainy Tuition Classes.</p>
+                    <p>You can share this result on WhatsApp to continue your admission process.</p>
+                    <button id="claim-whatsapp" class="share-btn whatsapp" style="background: #25D366; color: white; width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                        <i class="fab fa-whatsapp"></i> Continue on WhatsApp
+                    </button>
+                </div>
+            `;
+        } else {
+            message = `Good try, ${userName}!`;
+            resultBoxHTML = `
+                <p style="margin: 20px 0;">
+                    You scored ${percentage}%. Score 80% or above to become eligible for up to <b>15% scholarship</b> on admission.
+                </p>
+            `;
+        }
+
+        resultContainer.innerHTML = `
+            <div class="result-content">
+                <h2>${message}</h2>
+                <div class="score-display">
+                    <div class="score-circle">
+                        <span class="percentage" style="display: block; font-size: 2.5rem; font-weight: bold;">${percentage}%</span>
+                        <span class="score-text">Score: ${score}/${quiz.questions.length}</span>
+                    </div>
+                </div>
+
+                <div style="margin: 14px 0; color: #6a1b9a; font-weight: 600;">
+                    Attempts used: ${attemptsUsed}/${MAX_ATTEMPTS} | Attempts left: ${attemptsLeft < 0 ? 0 : attemptsLeft}
+                </div>
+
+                ${resultBoxHTML}
+
+                <div class="action-buttons" style="display: flex; flex-direction: column; gap: 10px;">
+                    <button id="view-leaderboard-btn" class="leaderboard-btn" style="padding: 12px; background: #6a1b9a; color: white; border: none; border-radius: 8px;">
+                        <i class="fas fa-trophy"></i> View Leaderboard
+                    </button>
+                    ${attemptsLeft > 0 ? `
+                        <button id="retake-quiz" class="share-btn retake" style="padding: 12px; border: 1px solid #ddd; border-radius: 8px;">
+                            <i class="fas fa-redo"></i> Try Again
+                        </button>
+                    ` : `
+                        <button disabled class="share-btn retake" style="padding: 12px; border: 1px solid #ddd; border-radius: 8px; opacity: 0.6; cursor: not-allowed;">
+                            <i class="fas fa-ban"></i> No Attempts Left
+                        </button>
+                    `}
                 </div>
             </div>
-            
-            <!-- 🎯 ADD LEADERBOARD CTA HERE -->
-            <div class="leaderboard-cta">
-                <p class="leaderboard-message">🏆 <strong>See how you ranked!</strong></p>
-                <p class="leaderboard-subtitle">Check your position on the leaderboard</p>
-                <button id="view-leaderboard-btn" class="leaderboard-btn">
-                    <i class="fas fa-trophy"></i> View Leaderboard
-                </button>
-            </div>
-            
-            <div class="share-buttons">
-                <button id="share-whatsapp" class="share-btn whatsapp">Share on WhatsApp</button>
-                <button id="share-link" class="share-btn copy">Copy Link</button>
-                <button id="retake-quiz" class="share-btn retake">Retake Quiz</button>
-            </div>
-        </div>
-    `;
-    
-    resultContainer.innerHTML = resultHTML;
+        `;
 
-    // 🎯 ADD LEADERBOARD BUTTON FUNCTIONALITY HERE
-    document.getElementById('view-leaderboard-btn').addEventListener('click', () => {
-        // Store user's recent result for highlighting on leaderboard
-        localStorage.setItem('justCompletedQuiz', JSON.stringify({
-            userName: userName,
-            score: score,
-            percentage: percentage,
-            quizId: quiz.id,
-            timestamp: new Date().toISOString()
-        }));
-        
-        // Redirect to homepage with leaderboard section
-        window.location.href = 'index.html#leaderboard';
-    });
+        if (isQualified) {
+            const claimBtn = document.getElementById('claim-whatsapp');
+            if (claimBtn) {
+                claimBtn.addEventListener('click', () => {
+                    const waMessage = `Hi Brainy Tuition Classes! I am ${userName} from Std ${userStd}. I scored ${percentage}% on the "${quiz.title}" quiz and I am eligible for up to 15% scholarship on admission. Please guide me with the next steps.`;
+                    window.open(`https://wa.me/YOUR_PHONE_NUMBER?text=${encodeURIComponent(waMessage)}`, '_blank');
+                });
+            }
+        }
 
-    // EXISTING SHARE FUNCTIONALITY (unchanged)
-    document.getElementById('share-whatsapp').addEventListener('click', () => {
-        const shareMessage = `🎯 I scored ${percentage}% (${score}/${quiz.questions.length}) on the "${quiz.title}" quiz! 🔐\n\nLet's test, are you a Cyber Hero??? 🦸‍♂️\n\nTake the challenge: `;
-        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage + window.location.href)}`;
-        window.open(whatsappUrl, '_blank');
-    });
-
-    document.getElementById('share-link').addEventListener('click', () => {
-        const shareText = `🎯 I scored ${percentage}% (${score}/${quiz.questions.length}) on the "${quiz.title}" quiz! 🔐\n\nLet's test, are you a Cyber Hero??? 🦸‍♂️\n\nTake the challenge: ${window.location.href}`;
-        
-        navigator.clipboard.writeText(shareText).then(() => {
-            alert('Link and message copied to clipboard!');
-        }).catch(() => {
-            const tempTextarea = document.createElement('textarea');
-            tempTextarea.value = shareText;
-            document.body.appendChild(tempTextarea);
-            tempTextarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(tempTextarea);
-            alert('Link and message copied to clipboard!');
+        document.getElementById('view-leaderboard-btn').addEventListener('click', () => {
+            window.location.href = 'index.html#leaderboard';
         });
-    });
 
-    document.getElementById('retake-quiz').addEventListener('click', () => {
-        location.reload();
-    });
-}
+        const retakeBtn = document.getElementById('retake-quiz');
+        if (retakeBtn) {
+            retakeBtn.addEventListener('click', () => {
+                location.reload();
+            });
+        }
+    }
 
-
-    async function saveResult(userName, quizId, quizTitle, score, totalQuestions, percentage) {
+    async function saveResult(userName, std, quizId, quizTitle, score, totalQuestions, percentage) {
         const result = {
             userName: userName,
+            std: std,
             quizId: quizId,
             quizTitle: quizTitle,
             score: score,
             totalQuestions: totalQuestions,
-            percentage: percentage
+            percentage: percentage,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
         };
-        
+
         try {
             await FirebaseHelper.saveQuizResult(result);
         } catch (error) {

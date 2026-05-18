@@ -18,11 +18,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         leaderboardContainer.innerHTML = '<div class="loading">Loading leaderboard...</div>';
     }
 
+    // ====== QUIZ CARDS (HOME GRID) ======
     async function loadQuizzes() {
         try {
             const quizzes = await FirebaseHelper.getQuizzes();
 
-            if (quizzes.length === 0) {
+            if (!quizzes || quizzes.length === 0) {
                 quizGrid.innerHTML = '<p class="no-quizzes">No quizzes available yet. Check back soon!</p>';
                 return;
             }
@@ -34,10 +35,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 quizCard.classList.add('quiz-card');
                 
                 quizCard.innerHTML = `
-                    <img src="${quiz.thumbnail}" alt="${quiz.title}" onerror="this.src='https://via.placeholder.com/300x200?text=Quiz+Image'">
+                    <img src="${quiz.thumbnail}" alt="${quiz.title}"
+                         onerror="this.src='https://via.placeholder.com/300x200?text=Brainy+Quiz'">
                     <h3>${quiz.title}</h3>
                     <p class="quiz-questions">${quiz.questions.length} Questions</p>
-                    <button class="play-btn" data-quiz-id="${quiz.id}" data-quiz-index="${index}">Play Quiz</button>
+                    <button class="play-btn" data-quiz-index="${index}">Take Quiz</button>
                 `;
                 
                 quizGrid.appendChild(quizCard);
@@ -55,21 +57,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // ====== LEADERBOARD (TOP BRAINY SCHOLARS) ======
     async function loadLeaderboard() {
         try {
             const results = await FirebaseHelper.getQuizResults();
             
-            if (results.length === 0) {
+            if (!results || results.length === 0) {
                 leaderboardContainer.innerHTML = `
                     <div class="no-leaderboard">
                         <i class="fas fa-trophy"></i>
-                        <p>No scores yet! Be the first to take a quiz and become a Cyber Hero!</p>
+                        <p>No scores yet! Be the first Brainy Scholar to take a quiz!</p>
                     </div>
                 `;
                 return;
             }
 
-            // Get best score for each user
+            // Best score for each user (overall)
             const userBestScores = {};
             
             results.forEach(result => {
@@ -79,18 +82,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             });
 
-            // Convert to array and sort by percentage
+            // Sort descending by percentage
             allLeaderboardData = Object.values(userBestScores)
                 .sort((a, b) => b.percentage - a.percentage);
 
-            // 🎯 ADD: Check for recently completed quiz
+            // Check if we just completed a quiz
             const justCompleted = JSON.parse(localStorage.getItem('justCompletedQuiz') || '{}');
             
             if (justCompleted.userName) {
-                // Show success message
                 showCompletionMessage(justCompleted);
                 
-                // Scroll to leaderboard after a short delay
                 setTimeout(() => {
                     const leaderboardSection = document.querySelector('.leaderboard-section') || 
                                               document.getElementById('leaderboard');
@@ -113,28 +114,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         const endIndex = startIndex + itemsPerPage;
         const pageData = allLeaderboardData.slice(startIndex, endIndex);
 
-        // 🎯 ADD: Get recently completed quiz info for highlighting
         const justCompleted = JSON.parse(localStorage.getItem('justCompletedQuiz') || '{}');
 
         let leaderboardHTML = '';
-        
+
         pageData.forEach((user, index) => {
             const globalRank = startIndex + index;
             const rankClass = globalRank < 3 ? `rank-${globalRank + 1}` : '';
             const medal = globalRank === 0 ? '🥇' : globalRank === 1 ? '🥈' : globalRank === 2 ? '🥉' : `#${globalRank + 1}`;
-            const heroTitle = user.percentage === 100 ? '<span class="hero-badge">🦸‍♂️ Cyber Hero</span>' : '';
+            const heroTitle = user.percentage === 100 ? '<span class="hero-badge">Brainy Star ⭐</span>' : '';
             
-            // 🎯 ADD: Check if this is the user who just completed a quiz
             const isRecentUser = justCompleted.userName && 
-                                justCompleted.userName.toLowerCase() === user.userName.toLowerCase() && 
-                                Math.abs(justCompleted.percentage - user.percentage) < 1; // Allow small percentage difference
-            
+                                 justCompleted.userName.toLowerCase() === user.userName.toLowerCase() && 
+                                 Math.abs(justCompleted.percentage - user.percentage) < 1;
+
             leaderboardHTML += `
                 <div class="leaderboard-item ${rankClass} ${isRecentUser ? 'highlight-user' : ''}">
                     <div class="rank">${medal}</div>
                     <div class="user-info">
                         <div class="user-name">
-                            ${user.userName} ${heroTitle}
+                            ${user.userName} (Std ${user.std || '-'}
+                            ) ${heroTitle}
                             ${isRecentUser ? '<span class="recent-badge">YOU!</span>' : ''}
                         </div>
                         <div class="quiz-name">${user.quizTitle}</div>
@@ -147,7 +147,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             `;
         });
 
-        // Add pagination if needed
         const totalPages = Math.ceil(allLeaderboardData.length / itemsPerPage);
         let paginationHTML = '';
         
@@ -158,7 +157,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <i class="fas fa-chevron-left"></i> Previous
                     </button>
                     <div class="pagination-info">
-                        Page ${currentPage} of ${totalPages} (${allLeaderboardData.length} total entries)
+                        Page ${currentPage} of ${totalPages} (${allLeaderboardData.length} entries)
                     </div>
                     <button class="pagination-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="changePage(${currentPage + 1})">
                         Next <i class="fas fa-chevron-right"></i>
@@ -169,11 +168,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         leaderboardContainer.innerHTML = leaderboardHTML + paginationHTML;
         
-        // 🎯 ADD: Clear the highlighting after showing it for 5 seconds
         if (justCompleted.userName) {
             setTimeout(() => {
                 localStorage.removeItem('justCompletedQuiz');
-                // Remove highlighting from all items
                 document.querySelectorAll('.highlight-user').forEach(item => {
                     item.classList.remove('highlight-user');
                 });
@@ -184,9 +181,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // 🎯 NEW: Function to show completion message
+    // Small toast after quiz complete
     function showCompletionMessage(completedQuiz) {
-        // Create success message
         const message = document.createElement('div');
         message.style.cssText = `
             position: fixed;
@@ -201,7 +197,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             font-weight: 600;
             font-size: 1.1em;
             box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
-            animation: slideInDown 0.5s ease-out;
             text-align: center;
             max-width: 90%;
         `;
@@ -213,34 +208,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         document.body.appendChild(message);
         
-        // Remove message after 5 seconds
         setTimeout(() => {
-            message.style.animation = 'slideOutUp 0.5s ease-in';
-            setTimeout(() => {
-                if (message.parentNode) {
-                    message.remove();
-                }
-            }, 500);
-        }, 4500);
+            if (message.parentNode) {
+                message.remove();
+            }
+        }, 5000);
     }
 
-    // Make changePage function global
+    // Make changePage function global (for pagination buttons)
     window.changePage = function(page) {
         if (page >= 1 && page <= Math.ceil(allLeaderboardData.length / itemsPerPage)) {
             displayLeaderboardPage(page);
-            document.querySelector('.leaderboard-section').scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'start' 
-            });
+            const section = document.querySelector('.leaderboard-section');
+            if (section) {
+                section.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+            }
         }
     };
 });
-
-// Add to your main quiz loading script
-function loadQuizzesLocal() {
-    const quizzes = JSON.parse(localStorage.getItem('cyberHeroQuizzes') || '[]');
-    return quizzes;
-}
-
-// Use this instead of Firebase queries
-const quizzes = loadQuizzesLocal();

@@ -1,36 +1,36 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Quizzes: Public read, validated writes, allow admin deletes
+
     match /quizzes/{quizId} {
       allow read: if true;
-      allow write: if isValidQuiz();
-      allow delete: if true; // Allow any authenticated user to delete
+
+      // Admin panel can create/edit/delete quizzes after Firebase auth
+      allow create, update, delete: if request.auth != null;
     }
-    
-    // Quiz Results: Public read, validated creates, FIXED - allow authenticated users to delete
+
     match /quizResults/{resultId} {
       allow read: if true;
-      allow create: if isValidResult();
-      allow update: if false; // Prevent score tampering
-      allow delete: if request.auth != null; // FIXED: Any authenticated user can delete
-    }
-    
-    // FUNCTIONS
-    function isValidQuiz() {
-      return request.resource.data.title is string &&
-             request.resource.data.title.size() > 0 &&
-             request.resource.data.questions is list &&
-             request.resource.data.questions.size() > 0;
-    }
-    
-    function isValidResult() {
-      return request.resource.data.userName is string &&
-             request.resource.data.userName.size() <= 50 &&
-             request.resource.data.score is number &&
-             request.resource.data.percentage >= 0 &&
-             request.resource.data.percentage <= 100;
+
+      // Students can submit only valid result format
+      allow create: if
+        request.resource.data.userName is string &&
+        request.resource.data.schoolName is string &&
+        request.resource.data.standard is string &&
+        request.resource.data.quizId is string &&
+        request.resource.data.quizTitle is string &&
+        request.resource.data.score is number &&
+        request.resource.data.totalQuestions is number &&
+        request.resource.data.percentage is number &&
+        request.resource.data.percentage >= 0 &&
+        request.resource.data.percentage <= 100 &&
+        request.resource.data.score >= 0 &&
+        request.resource.data.totalQuestions == 15 &&
+        request.resource.data.standard in ["5", "6", "7", "8", "9"];
+
+      // Admin can reset/delete results
+      allow update, delete: if request.auth != null;
     }
   }
 }
