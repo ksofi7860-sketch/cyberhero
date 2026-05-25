@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const resultContainer = document.getElementById('result-container');
     const startQuizBtn = document.getElementById('start-quiz-btn');
     const userNameInput = document.getElementById('user-name');
-    const userStdInput = document.getElementById('user-std');
+    const userSchoolInput = document.getElementById('user-school');
 
     const urlParams = new URLSearchParams(window.location.search);
     const quizIndex = parseInt(urlParams.get('quiz'));
@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let score = 0;
     let userName = '';
     let userStd = '';
+    let userSchool = '';
 
     let timerId = null;
     const QUESTION_TIME = 35;
@@ -30,6 +31,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.body.innerHTML = '<div class="error-msg"><h1>Quiz not found!</h1><a href="index.html">Back to Home</a></div>';
             return;
         }
+        userStd = quiz.standard || quiz.std || '';
+
+const selectedStdDisplay = document.getElementById('selected-std-display');
+if (selectedStdDisplay) {
+    selectedStdDisplay.textContent = userStd
+        ? `Selected Quiz: Standard ${userStd}`
+        : `Selected Quiz: ${quiz.title}`;
+}
     } catch (error) {
         console.error('Error loading quiz:', error);
         document.body.innerHTML = '<h1>Error loading quiz!</h1>';
@@ -38,20 +47,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     startQuizBtn.addEventListener('click', () => {
         userName = userNameInput.value.trim();
-        userStd = userStdInput.value;
+userSchool = userSchoolInput.value.trim();
+userStd = quiz.standard || quiz.std || userStd;
 
-        if (!userName || !userStd) {
-            alert('Please enter your name and select your Standard (5-9).');
-            return;
-        }
+if (!userName) {
+    alert('Please enter your name');
+    return;
+}
 
-        const attemptKey = getAttemptKey(userName, userStd, quiz.id);
-        const attemptsUsed = parseInt(localStorage.getItem(attemptKey) || '0', 10);
+if (!userSchool) {
+    alert('Please enter your school name');
+    return;
+}
 
-        if (attemptsUsed >= MAX_ATTEMPTS) {
-            alert('You have already used all 3 attempts for this quiz.');
-            return;
-        }
+if (!userStd) {
+    alert('Quiz standard is missing. Please check this quiz in admin panel.');
+    return;
+}
 
         userNameContainer.classList.add('hidden');
         quizContainer.classList.remove('hidden');
@@ -94,22 +106,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         const attemptsLeft = MAX_ATTEMPTS - getAttemptsUsed();
 
         let questionHTML = `
-            <div class="quiz-content">
-                <div class="question-header">
-                    <div class="question-counter">
-                        Std ${userStd} | Question ${currentQuestionIndex + 1} of ${quiz.questions.length}
-                    </div>
-                    <div class="timer">
-                        Time left: <span id="timer-value">${QUESTION_TIME}</span>s
-                    </div>
-                </div>
+    <div class="quiz-content">
+        <div class="quiz-progress-wrap">
+            <div class="quiz-progress-info">
+                <span>Std ${userStd} | Question ${currentQuestionIndex + 1} of ${quiz.questions.length}</span>
+                <span id="timer-text">${QUESTION_TIME}s left</span>
+            </div>
 
-                <div class="quiz-meta" style="margin: 10px 0 15px; color: #6a1b9a; font-weight: 600;">
-                    Attempts left: ${attemptsLeft} / ${MAX_ATTEMPTS} | Scholarship up to 15%
-                </div>
+            <div class="timer-progress">
+                <div id="timer-progress-bar"></div>
+            </div>
+        </div>
 
-                <h2 class="question-title">${question.question}</h2>
-        `;
+        <div class="quiz-meta">
+            Attempts left: ${attemptsLeft} / ${MAX_ATTEMPTS} | Scholarship up to 15%
+        </div>
+
+        <h2 class="question-title">${question.question}</h2>
+`;
 
         if (question.imageUrl) {
             questionHTML += `
@@ -133,17 +147,46 @@ document.addEventListener('DOMContentLoaded', async () => {
         quizContainer.innerHTML = questionHTML;
 
         timeLeft = QUESTION_TIME;
-        const timerValueEl = document.getElementById('timer-value');
 
-        timerId = setInterval(() => {
-            timeLeft--;
-            if (timerValueEl) timerValueEl.textContent = timeLeft;
+const timerTextEl = document.getElementById('timer-text');
+const timerProgressBar = document.getElementById('timer-progress-bar');
 
-            if (timeLeft <= 0) {
-                clearQuestionTimer();
-                handleTimeUp();
-            }
-        }, 1000);
+if (timerTextEl) {
+    timerTextEl.textContent = `${timeLeft}s left`;
+}
+
+if (timerProgressBar) {
+    timerProgressBar.style.width = '100%';
+    timerProgressBar.classList.remove('warning', 'danger');
+}
+
+timerId = setInterval(() => {
+    timeLeft--;
+
+    const percentageLeft = (timeLeft / QUESTION_TIME) * 100;
+
+    if (timerTextEl) {
+        timerTextEl.textContent = `${timeLeft}s left`;
+    }
+
+    if (timerProgressBar) {
+        timerProgressBar.style.width = `${percentageLeft}%`;
+        timerProgressBar.classList.remove('warning', 'danger');
+
+        if (percentageLeft <= 30 && percentageLeft > 15) {
+            timerProgressBar.classList.add('warning');
+        }
+
+        if (percentageLeft <= 15) {
+            timerProgressBar.classList.add('danger');
+        }
+    }
+
+    if (timeLeft <= 0) {
+        clearQuestionTimer();
+        handleTimeUp();
+    }
+}, 1000);
     }
 
     function handleTimeUp() {
@@ -199,128 +242,163 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     async function showResult() {
-        clearQuestionTimer();
-        incrementAttempts();
+    clearQuestionTimer();
+    incrementAttempts();
 
-        quizContainer.classList.add('hidden');
-        resultContainer.classList.remove('hidden');
+    quizContainer.classList.add('hidden');
+    resultContainer.classList.remove('hidden');
 
-        const percentage = Math.round((score / quiz.questions.length) * 100);
-        const attemptsUsed = getAttemptsUsed();
-        const attemptsLeft = MAX_ATTEMPTS - attemptsUsed;
+    const percentage = Math.round((score / quiz.questions.length) * 100);
+    const attemptsUsed = getAttemptsUsed();
+    const attemptsLeft = Math.max(0, MAX_ATTEMPTS - attemptsUsed);
 
-        await saveResult(userName, userStd, quiz.id, quiz.title, score, quiz.questions.length, percentage);
+await saveResult(userName, userStd, userSchool, quiz.id, quiz.title, score, quiz.questions.length, percentage);
+    try {
+        localStorage.setItem('justCompletedQuiz', JSON.stringify({
+    userName,
+    schoolName: userSchool,
+    school: userSchool,
+    std: userStd,
+    standard: userStd,
+    percentage,
+    score,
+    totalQuestions: quiz.questions.length,
+    quizTitle: quiz.title
+}));
+    } catch (e) {
+        console.warn('Could not store recent result in localStorage', e);
+    }
 
-        try {
-            localStorage.setItem('justCompletedQuiz', JSON.stringify({
-                userName,
-                std: userStd,
-                percentage,
-                score,
-                totalQuestions: quiz.questions.length,
-                quizTitle: quiz.title
-            }));
-        } catch (e) {
-            console.warn('Could not store recent result in localStorage', e);
-        }
+    const isQualified = percentage >= 90;
 
-        const isQualified = percentage >= 80;
+    resultContainer.innerHTML = `
+        <div class="result-content redesigned-result">
+            <div class="result-icon">
+                <i class="fas fa-award"></i>
+            </div>
 
-        let message = '';
-        let resultBoxHTML = '';
+            <span class="page-badge">Challenge Complete</span>
 
-        if (isQualified) {
-            message = `Excellent work, ${userName}!`;
-            resultBoxHTML = `
-                <div class="discount-box" style="background: #f3e8ff; border: 2px dashed #7b1fa2; padding: 20px; border-radius: 15px; margin: 20px 0;">
-                    <h3 style="color: #6a1b9a; margin-top: 0;">🎓 Scholarship Opportunity Unlocked!</h3>
-                    <p>You scored ${percentage}% and are eligible for up to <strong>15% scholarship</strong> on admission at Brainy Tuition Classes.</p>
-                    <p>You can share this result on WhatsApp to continue your admission process.</p>
-                    <button id="claim-whatsapp" class="share-btn whatsapp" style="background: #25D366; color: white; width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
-                        <i class="fab fa-whatsapp"></i> Continue on WhatsApp
-                    </button>
-                </div>
-            `;
-        } else {
-            message = `Good try, ${userName}!`;
-            resultBoxHTML = `
-                <p style="margin: 20px 0;">
-                    You scored ${percentage}%. Score 80% or above to become eligible for up to <b>15% scholarship</b> on admission.
-                </p>
-            `;
-        }
+            <h2 class="result-title">
+                ${isQualified ? `Excellent work, ${userName}!` : `Good try, ${userName}!`}
+            </h2>
 
-        resultContainer.innerHTML = `
-            <div class="result-content">
-                <h2>${message}</h2>
-                <div class="score-display">
-                    <div class="score-circle">
-                        <span class="percentage" style="display: block; font-size: 2.5rem; font-weight: bold;">${percentage}%</span>
-                        <span class="score-text">Score: ${score}/${quiz.questions.length}</span>
-                    </div>
-                </div>
+            <p class="result-subtitle">
+                Std ${userStd} • ${quiz.title}
+            </p>
 
-                <div style="margin: 14px 0; color: #6a1b9a; font-weight: 600;">
-                    Attempts used: ${attemptsUsed}/${MAX_ATTEMPTS} | Attempts left: ${attemptsLeft < 0 ? 0 : attemptsLeft}
-                </div>
-
-                ${resultBoxHTML}
-
-                <div class="action-buttons" style="display: flex; flex-direction: column; gap: 10px;">
-                    <button id="view-leaderboard-btn" class="leaderboard-btn" style="padding: 12px; background: #6a1b9a; color: white; border: none; border-radius: 8px;">
-                        <i class="fas fa-trophy"></i> View Leaderboard
-                    </button>
-                    ${attemptsLeft > 0 ? `
-                        <button id="retake-quiz" class="share-btn retake" style="padding: 12px; border: 1px solid #ddd; border-radius: 8px;">
-                            <i class="fas fa-redo"></i> Try Again
-                        </button>
-                    ` : `
-                        <button disabled class="share-btn retake" style="padding: 12px; border: 1px solid #ddd; border-radius: 8px; opacity: 0.6; cursor: not-allowed;">
-                            <i class="fas fa-ban"></i> No Attempts Left
-                        </button>
-                    `}
+            <div class="score-display">
+                <div class="score-ring">
+                    <h1>${percentage}%</h1>
+                    <p>Score: ${score}/${quiz.questions.length}</p>
                 </div>
             </div>
-        `;
 
-        if (isQualified) {
-            const claimBtn = document.getElementById('claim-whatsapp');
-            if (claimBtn) {
-                claimBtn.addEventListener('click', () => {
-                    const waMessage = `Hi Brainy Tuition Classes! I am ${userName} from Std ${userStd}. I scored ${percentage}% on the "${quiz.title}" quiz and I am eligible for up to 15% scholarship on admission. Please guide me with the next steps.`;
-                    window.open(`https://wa.me/YOUR_PHONE_NUMBER?text=${encodeURIComponent(waMessage)}`, '_blank');
-                });
+            <div class="attempt-status">
+                Attempts used: ${attemptsUsed}/${MAX_ATTEMPTS} | Attempts left: ${attemptsLeft}
+            </div>
+
+            ${
+                isQualified
+                    ? `
+                    <div class="scholarship-box">
+    <div class="scholarship-card">
+        <img src="images/scholarship.gif" alt="Scholarship celebration" class="result-gif">
+
+        <p class="result-mini-title">CONGRATULATIONS!</p>
+        <h3>🏆 Ohooo! Topper Energy Detected!</h3>
+        <p>
+            You scored <strong>${percentage}%</strong> and unlocked 
+            <strong>15% scholarship</strong>.
+        </p>
+        <p>
+            Brainy Tuition Classes is ready for you — share this score on WhatsApp and confirm your admission.
+        </p>
+    </div>
+
+    <button id="claim-whatsapp" class="share-btn whatsapp full-width-btn">
+        <i class="fab fa-whatsapp"></i> Confirm Admission on WhatsApp
+    </button>
+</div>
+                    `
+                    : `
+                    <div class="try-again-box">
+    <h3>😄 Oops! Scholarship ne thoda attitude dikha diya.</h3>
+    <p>
+        You scored <strong>${percentage}%</strong>. You’re close — try again, score 
+        <strong>90%+</strong>, and unlock your <strong>15% scholarship</strong>!
+    </p>
+    <p class="try-again-small">
+        Brainy students don’t quit… they retry smarter. 🚀
+    </p>
+</div>
+                    `
             }
-        }
 
-        document.getElementById('view-leaderboard-btn').addEventListener('click', () => {
-            window.location.href = 'index.html#leaderboard';
-        });
+            <div class="result-actions">
+                <button id="view-leaderboard-btn" class="share-btn leaderboard-result-btn">
+                    <i class="fas fa-trophy"></i> View Leaderboard
+                </button>
 
-        const retakeBtn = document.getElementById('retake-quiz');
-        if (retakeBtn) {
-            retakeBtn.addEventListener('click', () => {
-                location.reload();
+                ${
+                    attemptsLeft > 0
+                        ? `
+                        <button id="retake-quiz" class="share-btn retake-btn">
+                            <i class="fas fa-redo"></i> Try Again
+                        </button>
+                        `
+                        : `
+                        <button disabled class="share-btn retake-btn disabled-btn">
+                            <i class="fas fa-ban"></i> No Attempts Left
+                        </button>
+                        `
+                }
+            </div>
+        </div>
+    `;
+
+    if (isQualified) {
+        const claimBtn = document.getElementById('claim-whatsapp');
+        if (claimBtn) {
+            claimBtn.addEventListener('click', () => {
+                const waMessage = `Hi Brainy Tuition Classes! I am ${userName} - Std ${userStd}. I scored ${percentage}% on the "${quiz.title}"and qualified for 15% scholarship by scoring 90% or above. Please guide me with the next steps.`;
+                window.open(`https://wa.me/8850831979?text=${encodeURIComponent(waMessage)}`, '_blank');
             });
         }
     }
 
-    async function saveResult(userName, std, quizId, quizTitle, score, totalQuestions, percentage) {
-        const result = {
-            userName: userName,
-            std: std,
-            quizId: quizId,
-            quizTitle: quizTitle,
-            score: score,
-            totalQuestions: totalQuestions,
-            percentage: percentage,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        };
-
-        try {
-            await FirebaseHelper.saveQuizResult(result);
-        } catch (error) {
-            console.error('Error saving result:', error);
-        }
+    const leaderboardBtn = document.getElementById('view-leaderboard-btn');
+    if (leaderboardBtn) {
+        leaderboardBtn.addEventListener('click', () => {
+            window.location.href = 'index.html#leaderboard';
+        });
     }
+
+    const retakeBtn = document.getElementById('retake-quiz');
+    if (retakeBtn) {
+        retakeBtn.addEventListener('click', () => {
+            location.reload();
+        });
+    }
+}
+
+async function saveResult(userName, std, schoolName, quizId, quizTitle, score, totalQuestions, percentage) {   const result = {
+    userName: userName,
+    schoolName: schoolName,
+    school: schoolName,
+    std: std,
+    standard: std,
+    quizId: quizId,
+    quizTitle: quizTitle,
+    score: score,
+    totalQuestions: totalQuestions,
+    percentage: percentage,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+};
+    try {
+        await FirebaseHelper.saveQuizResult(result);
+    } catch (error) {
+        console.error('Error saving result:', error);
+    }
+}
 });

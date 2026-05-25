@@ -133,9 +133,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="rank">${medal}</div>
                     <div class="user-info">
                         <div class="user-name">
-                            ${user.userName} (Std ${user.std || '-'}
-                            ) ${heroTitle}
-                            ${isRecentUser ? '<span class="recent-badge">YOU!</span>' : ''}
+${user.userName} 
+<span class="std-chip">
+    Std ${user.std || user.standard || '-'} 
+    ${user.schoolName || user.school ? `- ${user.schoolName || user.school}` : ''}
+</span> 
+${heroTitle}                            ${isRecentUser ? '<span class="recent-badge">YOU!</span>' : ''}
                         </div>
                         <div class="quiz-name">${user.quizTitle}</div>
                     </div>

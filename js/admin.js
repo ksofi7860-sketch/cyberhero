@@ -164,9 +164,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       };
     });
 
-    if (questions.length !== 15) {
-      throw new Error("Admission quiz should have exactly 15 questions.");
-    }
+ if (questions.length < 1) {
+  throw new Error("Please add at least 1 question.");
+}
 
     return {
       id: editingQuizId || undefined,

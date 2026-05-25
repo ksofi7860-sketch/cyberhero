@@ -106,8 +106,43 @@
         <div id="create-quiz-section">
             <form id="create-quiz-form">
                 <h2>Create a New Quiz</h2>
-                <input type="text" id="quiz-title" placeholder="Quiz Title" required>
-                <input type="text" id="quiz-thumbnail" placeholder="Thumbnail Image URL" required>
+
+<div class="form-group">
+    <label for="quiz-title">Quiz Title</label>
+    <input type="text" id="quiz-title" placeholder="Example: Std 5 Scholarship Quiz" required>
+</div>
+
+<div class="form-group">
+    <label for="quiz-standard">Standard</label>
+    <select id="quiz-standard" required>
+        <option value="">Select Standard</option>
+        <option value="5">Std 5</option>
+        <option value="6">Std 6</option>
+        <option value="7">Std 7</option>
+        <option value="8">Std 8</option>
+        <option value="9">Std 9</option>
+    </select>
+</div>
+
+<div class="form-group">
+    <label for="quiz-board">Board</label>
+    <input type="text" id="quiz-board" value="SSC Maharashtra Board" required>
+</div>
+
+<div class="form-group">
+    <label for="quiz-time">Timer Per Question</label>
+    <input type="number" id="quiz-time" value="35" min="10" max="120" required>
+</div>
+
+<div class="form-group">
+    <label for="quiz-attempts">Maximum Attempts</label>
+    <input type="number" id="quiz-attempts" value="3" min="1" max="5" required>
+</div>
+
+<div class="form-group">
+    <label for="quiz-thumbnail">Thumbnail Image URL</label>
+    <input type="text" id="quiz-thumbnail" placeholder="Optional image URL">
+</div>
                 
                 <div id="questions-container">
                     <!-- Questions with image/GIF inputs will be added here dynamically by JavaScript -->
@@ -145,14 +180,7 @@
             <div class="footer-left">
                 <p>&copy; 2026 Brainy. All rights reserved.</p>
             </div>
-            <div class="footer-right">
-                <a href="https://www.instagram.com/i.am.cyber.hero/" target="_blank" title="Follow us on Instagram">
-                    <i class="fab fa-instagram"></i>
-                </a>
-                <a href="https://www.youtube.com/your-youtube-channel" target="_blank" title="Subscribe on YouTube">
-                    <i class="fab fa-youtube"></i>
-                </a>
-            </div>
+            
         </div>
     </footer>
 

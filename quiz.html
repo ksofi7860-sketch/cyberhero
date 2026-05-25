@@ -14,8 +14,8 @@
         <div class="page-shell header-inner">
             <a href="index.html" class="title-link brand-link">
                 <div class="brand-logo-mini">
-                    <i class="fas fa-brain"></i>
-                </div>
+    <img src="images/brainy logo.png" alt="Brainy Tuition Classes Logo">
+</div>
                 <div class="brand-copy">
                     <h1>Brainy Tuition Classes</h1>
                     <p>Scholarship Quiz Challenge</p>
@@ -51,18 +51,13 @@
                         <h3>Enter Details to Begin</h3>
 
                         <label for="user-name">Student Name</label>
-                        <input type="text" id="user-name" placeholder="Enter full name" required>
+<input type="text" id="user-name" placeholder="Enter full name" required>
 
-                        <label for="user-std">Select Standard</label>
-                        <select id="user-std" required>
-                            <option value="">Choose your standard</option>
-                            <option value="5">Standard 5</option>
-                            <option value="6">Standard 6</option>
-                            <option value="7">Standard 7</option>
-                            <option value="8">Standard 8</option>
-                            <option value="9">Standard 9</option>
-                        </select>
+<label for="user-school">School Name</label>
+<input type="text" id="user-school" placeholder="Enter school name" required>
 
+<p id="selected-std-display" class="selected-std-display"></p>
+                        
                         <button id="start-quiz-btn" class="start-btn">
                             <i class="fas fa-play"></i> Let’s Start
                         </button>
@@ -80,7 +75,16 @@
 
                         <div class="timer-box">
                             <i class="fas fa-clock"></i>
-                            <span id="timer-value">35</span>s
+                            <div class="quiz-progress-wrap">
+    <div class="quiz-progress-info">
+        <span id="question-count">Question 1</span>
+        <span id="timer-text">35s left</span>
+    </div>
+
+    <div class="timer-progress">
+        <div id="timer-progress-bar"></div>
+    </div>
+</div>
                         </div>
                     </div>
 
