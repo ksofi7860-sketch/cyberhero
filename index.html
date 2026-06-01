@@ -20,7 +20,7 @@
 
         <div class="brand-text center-title">
             <h1>Brainy Tuition Classes</h1>
-            <p>Maharashtra SSC | Std 5 to 9</p>
+            <p> SSC | ICSE | Std 5 to 9</p>
         </div>
 
         <nav class="top-nav">
@@ -35,13 +35,24 @@
         <section class="leaderboard-section top-leaderboard" id="leaderboard">
             <div class="admission-marquee-box">
             <marquee behavior="scroll" direction="left" scrollamount="7">
-                🎓 Admissions Open till 15 June 2026 — Grab this limited-time opportunity!
+              SSC & ICSE BOARD  🎓 Admissions Open till 15 June 2026 — Grab this limited-time opportunity!
+                &nbsp;&nbsp;|&nbsp;&nbsp;
+                <strong>SSC Board</strong>
                 &nbsp;&nbsp;|&nbsp;&nbsp;
                 Std 5-6 Fees: <del>₹1550</del> <strong>₹1300</strong>
                 &nbsp;&nbsp;|&nbsp;&nbsp;
                 Std 7-8 Fees: <del>₹1650</del> <strong>₹1400</strong>
                 &nbsp;&nbsp;|&nbsp;&nbsp;
                 Std 9 Fees: <del>₹1800</del> <strong>₹1500</strong>
+  &nbsp;&nbsp;|&nbsp;&nbsp;              
+<strong>ICSE Board</strong>
+                &nbsp;&nbsp;|&nbsp;&nbsp;
+                Std 5-6 Fees: <del>₹2350</del> <strong>₹2000</strong>
+                &nbsp;&nbsp;|&nbsp;&nbsp;
+                Std 7-8 Fees: <del>₹2650</del> <strong>₹2200</strong>
+                &nbsp;&nbsp;|&nbsp;&nbsp;
+                Std 9 Fees: <del>₹3000</del> <strong>₹2500</strong>
+
                 &nbsp;&nbsp;|&nbsp;&nbsp;
                 Score 90% and Get 15% Scholarship!
                 &nbsp;&nbsp;|&nbsp;&nbsp;
@@ -49,6 +60,11 @@
 
             </marquee>
         </div>
+
+
+
+
+
             <div class="container">
                 
                <div class="section-head">
@@ -137,18 +153,40 @@
         </section>
 
         <section class="quizzes-section" id="standards">
-            <div class="container">
-                <div class="section-head">
-                    <span class="section-tag">Choose Your Standard</span>
-                    <h2>Start the Brainy Challenge</h2>
-                    <p>Select your class and begin your scholarship quiz.</p>
-                </div>
+    <div class="container">
+        <div class="section-head">
+            <span class="section-tag">Choose Your Board</span>
+            <h2>Start the Brainy Scholarship Quiz</h2>
+            <p>Select your board first, then choose your standard quiz.</p>
+        </div>
 
-                <div class="quiz-grid" id="quiz-grid">
-                    <!-- Quiz cards from Firebase -->
-                </div>
-            </div>
-        </section>
+        <div class="board-choice-grid" id="board-choice-grid">
+            <button class="board-choice-card" data-board="SSC">
+                <span class="board-icon"><i class="fa-solid fa-graduation-cap"></i></span>
+                <h3>SSC Scholarship Quiz</h3>
+                <p>SSC Board · Std 5 to 9</p>
+            </button>
+
+            <button class="board-choice-card" data-board="ICSE">
+                <span class="board-icon"><i class="fa-solid fa-graduation-cap"></i></span>
+                <h3>ICSE Scholarship Quiz</h3>
+                <p>ICSE Board · Std 5 to 9</p>
+            </button>
+        </div>
+
+        <div class="selected-board-head hidden" id="selected-board-head">
+            <button id="back-to-boards" class="back-board-btn">
+                <i class="fa-solid fa-arrow-left"></i> Back to Boards
+            </button>
+            <h3 id="selected-board-title">SSC Scholarship Quiz</h3>
+            <p>Choose your standard and start the quiz.</p>
+        </div>
+
+        <div class="quiz-grid hidden" id="quiz-grid">
+            <!-- Quiz cards from Firebase -->
+        </div>
+    </div>
+</section>
     </main>
 
     <script src="js/firebase-config.js"></script>

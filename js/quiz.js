@@ -190,21 +190,17 @@ timerId = setInterval(() => {
     }
 
     function handleTimeUp() {
-        const optionCards = quizContainer.querySelectorAll('.option-card');
-        const question = quiz.questions[currentQuestionIndex];
+    const optionCards = quizContainer.querySelectorAll('.option-card');
 
-        optionCards.forEach((card, idx) => {
-            card.style.pointerEvents = 'none';
-            if (idx === question.answer) {
-                card.classList.add('correct');
-            }
-        });
+    optionCards.forEach((card) => {
+        card.style.pointerEvents = 'none';
+    });
 
-        setTimeout(() => {
-            currentQuestionIndex++;
-            displayQuestion();
-        }, 1000);
-    }
+    setTimeout(() => {
+        currentQuestionIndex++;
+        displayQuestion();
+    }, 1000);
+}
 
     quizContainer.addEventListener('click', (e) => {
         if (!e.target.classList.contains('option-card')) return;
@@ -219,19 +215,16 @@ timerId = setInterval(() => {
         clearQuestionTimer();
 
         const optionCards = quizContainer.querySelectorAll('.option-card');
-        optionCards.forEach((card, idx) => {
-            card.style.pointerEvents = 'none';
-            if (idx === question.answer) {
-                card.classList.add('correct');
-            }
-        });
+optionCards.forEach((card) => {
+    card.style.pointerEvents = 'none';
+});
 
-        if (selectedIndex === question.answer) {
-            score++;
-            selectedCard.classList.add('selected-correct');
-        } else {
-            selectedCard.classList.add('selected-incorrect');
-        }
+if (selectedIndex === question.answer) {
+    score++;
+    selectedCard.classList.add('selected-correct');
+} else {
+    selectedCard.classList.add('selected-incorrect');
+}
 
         selectedCard.parentElement.classList.add('locked');
 

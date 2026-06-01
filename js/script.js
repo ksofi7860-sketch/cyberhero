@@ -20,42 +20,107 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ====== QUIZ CARDS (HOME GRID) ======
     async function loadQuizzes() {
-        try {
-            const quizzes = await FirebaseHelper.getQuizzes();
+    try {
+        const quizzes = await FirebaseHelper.getQuizzes();
 
-            if (!quizzes || quizzes.length === 0) {
-                quizGrid.innerHTML = '<p class="no-quizzes">No quizzes available yet. Check back soon!</p>';
+        if (!quizzes || quizzes.length === 0) {
+            quizGrid.innerHTML = '<p class="no-quizzes">No quizzes available yet. Check back soon!</p>';
+            return;
+        }
+
+        window.allBrainyQuizzes = quizzes;
+
+        const boardChoiceGrid = document.getElementById('board-choice-grid');
+        const selectedBoardHead = document.getElementById('selected-board-head');
+        const selectedBoardTitle = document.getElementById('selected-board-title');
+        const backToBoardsBtn = document.getElementById('back-to-boards');
+
+        quizGrid.innerHTML = '';
+        quizGrid.classList.add('hidden');
+
+        if (boardChoiceGrid) {
+            boardChoiceGrid.addEventListener('click', (e) => {
+                const boardCard = e.target.closest('.board-choice-card');
+                if (!boardCard) return;
+
+                const selectedBoard = boardCard.getAttribute('data-board');
+                showBoardQuizzes(selectedBoard);
+            });
+        }
+
+        if (backToBoardsBtn) {
+            backToBoardsBtn.addEventListener('click', () => {
+                quizGrid.classList.add('hidden');
+                quizGrid.innerHTML = '';
+
+                if (boardChoiceGrid) boardChoiceGrid.classList.remove('hidden');
+                if (selectedBoardHead) selectedBoardHead.classList.add('hidden');
+            });
+        }
+
+        function showBoardQuizzes(board) {
+            const filteredQuizzes = quizzes.filter((quiz) => {
+                const quizBoard = String(quiz.board || '').toLowerCase();
+
+                if (board === 'SSC') {
+                    return quizBoard.includes('ssc') || quizBoard.includes('maharashtra');
+                }
+
+                if (board === 'ICSE') {
+                    return quizBoard.includes('icse');
+                }
+
+                return false;
+            });
+
+            if (boardChoiceGrid) boardChoiceGrid.classList.add('hidden');
+            if (selectedBoardHead) selectedBoardHead.classList.remove('hidden');
+            if (selectedBoardTitle) selectedBoardTitle.textContent = `${board} Scholarship Quiz`;
+
+            quizGrid.classList.remove('hidden');
+            quizGrid.innerHTML = '';
+
+            if (filteredQuizzes.length === 0) {
+                quizGrid.innerHTML = `
+                    <p class="no-quizzes">
+                        No ${board} quizzes available yet. Please check back soon!
+                    </p>
+                `;
                 return;
             }
 
-            quizGrid.innerHTML = ''; // Clear loading
+            filteredQuizzes.forEach((quiz) => {
+                const originalIndex = quizzes.findIndex((item) => item.id === quiz.id);
 
-            quizzes.forEach((quiz, index) => {
                 const quizCard = document.createElement('div');
                 quizCard.classList.add('quiz-card');
-                
+
                 quizCard.innerHTML = `
-                    <img src="${quiz.thumbnail}" alt="${quiz.title}"
+                    <img src="${quiz.thumbnail || 'https://via.placeholder.com/300x200?text=Brainy+Quiz'}" alt="${quiz.title}"
                          onerror="this.src='https://via.placeholder.com/300x200?text=Brainy+Quiz'">
                     <h3>${quiz.title}</h3>
-                    <p class="quiz-questions">${quiz.questions.length} Questions</p>
-                    <button class="play-btn" data-quiz-index="${index}">Take Quiz</button>
+                    <p class="quiz-questions">
+                        ${quiz.board || board} · Std ${quiz.standard || quiz.std || '-'} · ${quiz.questions?.length || 0} Questions
+                    </p>
+                    <button class="play-btn" data-quiz-index="${originalIndex}">Take Quiz</button>
                 `;
-                
+
                 quizGrid.appendChild(quizCard);
             });
-
-            quizGrid.addEventListener('click', (e) => {
-                if (e.target.classList.contains('play-btn')) {
-                    const quizIndex = e.target.getAttribute('data-quiz-index');
-                    window.location.href = `quiz.html?quiz=${quizIndex}`;
-                }
-            });
-        } catch (error) {
-            console.error('Error loading quizzes:', error);
-            quizGrid.innerHTML = '<p class="error">Error loading quizzes. Please refresh the page.</p>';
         }
+
+        quizGrid.addEventListener('click', (e) => {
+            if (e.target.classList.contains('play-btn')) {
+                const quizIndex = e.target.getAttribute('data-quiz-index');
+                window.location.href = `quiz.html?quiz=${quizIndex}`;
+            }
+        });
+
+    } catch (error) {
+        console.error('Error loading quizzes:', error);
+        quizGrid.innerHTML = '<p class="error">Error loading quizzes. Please refresh the page.</p>';
     }
+}
 
     // ====== LEADERBOARD (TOP BRAINY SCHOLARS) ======
     async function loadLeaderboard() {
