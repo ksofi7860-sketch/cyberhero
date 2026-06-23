@@ -1,195 +1,276 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brainy Tuition Classes | Scholarship Challenge</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="icon" type="image/png" href="images/brainy logo.png">
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Brainy Tuition Classes | Learn Better. Think Smarter.</title>
+  <link rel="icon" type="image/png" href="images/brainy-logo.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
-    <header class="site-header">
-    <div class="container header-container centered-header">
-        <div class="brand-logo">
-            <img src="images/brainy logo.png" alt="Brainy Tuition Classes Logo">
-        </div>
 
-        <div class="brand-text center-title">
-            <h1>Brainy Tuition Classes</h1>
-            <p> SSC | ICSE | Std 5 to 9</p>
-        </div>
+  <header class="site-header">
+    <div class="container header-content">
+      <div class="brand">
+        <img src="images/brainy logo.png" alt="Brainy Tuition Classes Logo" class="brand-logo">
 
-        <nav class="top-nav">
-            <a href="#leaderboard">Leaderboard</a>
-            <a href="#challenge">Scholarship</a>
-            <a href="#standards">Start Quiz</a>
-        </nav>
+        <div>
+          <h1>Brainy Tuition Classes</h1>
+          <p>Learn Better. Think Smarter.</p>
+        </div>
+      </div>
+
+      <div class="admission-pill">
+        Admissions Open
+      </div>
     </div>
-</header>
+  </header>
 
-    <main>
-        <section class="leaderboard-section top-leaderboard" id="leaderboard">
-            <div class="admission-marquee-box">
-            <marquee behavior="scroll" direction="left" scrollamount="7">
-              SSC & ICSE BOARD  🎓 Admissions Open for year 2026-2027 — Grab this limited-time opportunity!
-                &nbsp;&nbsp;|&nbsp;&nbsp;
-                <strong>SSC Board</strong>
-                &nbsp;&nbsp;|&nbsp;&nbsp;
-                Std 5-6 Fees: <del>₹1550</del> <strong>₹1300</strong>
-                &nbsp;&nbsp;|&nbsp;&nbsp;
-                Std 7-8 Fees: <del>₹1650</del> <strong>₹1400</strong>
-                &nbsp;&nbsp;|&nbsp;&nbsp;
-                Std 9 Fees: <del>₹1800</del> <strong>₹1500</strong>
-  &nbsp;&nbsp;|&nbsp;&nbsp;              
-<strong>ICSE Board</strong>
-                &nbsp;&nbsp;|&nbsp;&nbsp;
-                Std 5-6 Fees: <del>₹2350</del> <strong>₹2000</strong>
-                &nbsp;&nbsp;|&nbsp;&nbsp;
-                Std 7-8 Fees: <del>₹2650</del> <strong>₹2200</strong>
-                &nbsp;&nbsp;|&nbsp;&nbsp;
-                Std 9 Fees: <del>₹3000</del> <strong>₹2500</strong>
+  <main>
 
-                &nbsp;&nbsp;|&nbsp;&nbsp;
-                Score 90% and Get 15% Scholarship!
-                &nbsp;&nbsp;|&nbsp;&nbsp;
-                <strong>Call / WhatsApp: 8850831979</strong>
+    <!-- HERO -->
+    <section class="hero-section">
+      <div class="container hero-grid">
 
-            </marquee>
+        <div class="hero-content">
+          <span class="section-label">For Curious Minds & Confident Learners</span>
+
+          <h2>
+            Strong Basics.<br>
+            Better Marks.<br>
+            <span>Brighter Future.</span>
+          </h2>
+
+          <p class="hero-description">
+            Brainy Tuition Classes helps students understand concepts clearly,
+            build confidence and develop smart study habits — because learning
+            should feel simple, supportive and exciting.
+          </p>
+
+          <div class="hero-tags">
+            <span>✓ Personal Attention</span>
+            <span>✓ Small Focused Batches</span>
+            <span>✓ Regular Tests</span>
+            <span>✓ Doubt Solving</span>
+          </div>
+
+          <div class="hero-contact">
+            <p>Admissions & Enquiries</p>
+            <h3>Call / WhatsApp: 8850831979</h3>
+          </div>
         </div>
 
+        <div class="hero-card">
+          <div class="hero-card-top">
+            <span>Brainy Learning Journey</span>
+            <span>✦</span>
+          </div>
 
-
-
-
-            <div class="container">
-                
-               <div class="section-head">
-    <span class="section-tag">Top Scores</span>
-    <h2>Brainy Score Leaderboard</h2>
-    <p>See the top-performing students.</p>
-
-    <a href="#standards" class="leaderboard-cta-link">
-        Play Now — Score 90% and Get 15% Scholarship
-        <i class="fas fa-arrow-right"></i>
-    </a>
-</div>
-                <div class="leaderboard-shell">
-                    <div class="leaderboard-topbar">
-                        <span><i class="fas fa-trophy"></i> Top Brainy Scholars</span>
-                        <span class="live-badge">Live Ranking</span>
-                    </div>
-
-                    <div id="leaderboard-container">
-                        <table id="leaderboard-table">
-                            <thead>
-                                <tr>
-                                    <th>Rank</th>
-                                    <th>Name</th>
-                                    <th>Std</th>
-                                    <th>Score</th>
-                                </tr>
-                            </thead>
-                            <tbody id="leaderboard-body"></tbody>
-                        </table>
-                    </div>
-                </div>
+          <div class="journey-step">
+            <div class="step-number">1</div>
+            <div>
+              <h3>Understand Clearly</h3>
+              <p>Build strong concepts from the beginning.</p>
             </div>
-        </section>
+          </div>
 
-        <section class="hero-section" id="challenge">
-            <div class="container hero-grid">
-                <div class="hero-left">
-                    <span class="hero-chip">Admissions Open</span>
-                    <h2>Get upto ₹500/- Discount on Monthly fees</h2>
-                    <p>
-                        Take the Brainy Challenge and get scholarship.
-                        You get <strong>3 attempts</strong>,<strong>15 questions</strong>, <strong>35 seconds for each question</strong>,
-                        and a chance to earn up to <strong>15% scholarship(upto ₹500/-)</strong>.
-                    </p>
-
-                    <div class="hero-actions">
-                        <a href="#standards" class="btn btn-primary">Let’s Start</a>
-                        <a href="#leaderboard" class="btn btn-outline">View Scores</a>
-                    </div>
-
-                    <div class="hero-stats">
-                        <div class="stat-box">
-                            <h3>3</h3>
-                            <p>Attempts</p>
-                        </div>
-                        <div class="stat-box">
-                            <h3>35s</h3>
-                            <p>Per Question</p>
-                        </div>
-                        <div class="stat-box">
-                            <h3>15%</h3>
-                            <p>Scholarship</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="hero-right">
-                    <div class="offer-card">
-                        <div class="offer-top">Brainy Scholarship Challenge</div>
-                        <h3>Play. Score. Qualify.</h3>
-                        <p>Attempt the quiz, improve your score within 3 tries, and secure your scholarship opportunity.</p>
-                        <div class="offer-badge">Std 5 to 9</div>
-                    </div>
-                </div>
+          <div class="journey-step">
+            <div class="step-number">2</div>
+            <div>
+              <h3>Practice Smartly</h3>
+              <p>Regular tests, revision and doubt solving.</p>
             </div>
-        </section>
+          </div>
 
-        <section class="promo-strip">
-            <div class="container promo-strip-inner">
-                <p>
-                    <i class="fas fa-star"></i>
-                    15 Questions · 35 Seconds Each · 3 Attempts · Scholarship Opportunity
-                </p>
+          <div class="journey-step">
+            <div class="step-number">3</div>
+            <div>
+              <h3>Grow Confidently</h3>
+              <p>Better marks, stronger thinking and confidence.</p>
             </div>
-        </section>
+          </div>
 
-        <section class="quizzes-section" id="standards">
-    <div class="container">
-        <div class="section-head">
-            <span class="section-tag">Choose Your Board</span>
-            <h2>Start the Brainy Scholarship Quiz</h2>
-            <p>Select your board first, then choose your standard quiz.</p>
+          <div class="hero-quote">
+            “Every child can learn with the right guidance.”
+          </div>
         </div>
 
-        <div class="board-choice-grid" id="board-choice-grid">
-            <button class="board-choice-card" data-board="SSC">
-                <span class="board-icon"><i class="fa-solid fa-graduation-cap"></i></span>
-                <h3>SSC Scholarship Quiz</h3>
-                <p>SSC Board · Std 5 to 9</p>
-            </button>
+      </div>
+    </section>
 
-            <button class="board-choice-card" data-board="ICSE">
-                <span class="board-icon"><i class="fa-solid fa-graduation-cap"></i></span>
-                <h3>ICSE Scholarship Quiz</h3>
-                <p>ICSE Board · Std 5 to 9</p>
-            </button>
+    <!-- PROGRAMS -->
+    <section class="programs-section">
+      <div class="container">
+
+        <div class="heading-block">
+          <span class="section-label">Programs at Brainy</span>
+          <h2>Learning Support for Every Important Stage</h2>
+          <p>
+            Academic support, subject clarity and future-ready skills for students
+            
+          </p>
         </div>
 
-        <div class="selected-board-head hidden" id="selected-board-head">
-            <button id="back-to-boards" class="back-board-btn">
-                <i class="fa-solid fa-arrow-left"></i> Back to Boards
-            </button>
-            <h3 id="selected-board-title">SSC Scholarship Quiz</h3>
-            <p>Choose your standard and start the quiz.</p>
+        <div class="program-grid">
+
+          <article class="program-card ssc-card">
+            <div class="program-icon">📚</div>
+            <h3>SSC Board Tuition</h3>
+            <p class="program-subtitle">Maharashtra SSC Board </p>
+
+            <ul>
+              <li>Concept-focused teaching</li>
+              <li>Regular tests and revision</li>
+              <li>Personal doubt solving</li>
+              <li>Strong basics for better marks</li>
+            </ul>
+          </article>
+
+          <article class="program-card icse-card">
+            <div class="program-icon">🎓</div>
+            <h3>ICSE Board Tuition</h3>
+            <p class="program-subtitle">ICSE Board </p>
+
+            <ul>
+              <li>Detailed concept clarity</li>
+              <li>Board-level answer writing</li>
+              <li>Subject-wise practice support</li>
+              <li>Individual student guidance</li>
+            </ul>
+          </article>
+
+          <article class="program-card cs-card">
+            <div class="program-icon">💻</div>
+            <h3>Computer Science</h3>
+            <p class="program-subtitle">Std 11 & Std 12 Students</p>
+
+            <ul>
+              <li>Programming fundamentals</li>
+              <li>Logic-building and problem solving</li>
+              <li>Academic Computer Science support</li>
+              <li>Exam preparation guidance</li>
+            </ul>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- AI AND CYBER -->
+    <section class="cyber-section">
+      <div class="container cyber-grid">
+
+        <div class="cyber-card">
+          <div class="shield-icon">🛡️</div>
+          <h3>Beyond Academics</h3>
+          <p>Marks matter. But safe digital habits matter too.</p>
+
+          <div class="cyber-mini-tags">
+            <span>AI Smart Use</span>
+            <span>Online Safety</span>
+            <span>Digital Habits</span>
+          </div>
         </div>
 
-        <div class="quiz-grid hidden" id="quiz-grid">
-            <!-- Quiz cards from Firebase -->
+        <div class="cyber-content">
+          <span class="section-label light-label">Special Free Bonus</span>
+
+          <h2>
+            Free AI & Cyber Safety Awareness Sessions
+            <span>Every Month</span>
+          </h2>
+
+          <p>
+            Brainy students receive free monthly awareness sessions designed to
+            help them use technology safely, confidently and responsibly.
+          </p>
+
+          <div class="cyber-list">
+            <div>✓ Online scams and fraud awareness</div>
+            <div>✓ Social media safety</div>
+            <div>✓ Protecting personal information</div>
+            <div>✓ Smart and safe use of AI tools</div>
+            <div>✓ Healthy digital habits for students</div>
+          </div>
         </div>
+
+      </div>
+    </section>
+
+    <!-- WHY BRAINY -->
+    <section class="why-section">
+      <div class="container">
+
+        <div class="heading-block">
+          <span class="section-label">Why Brainy?</span>
+          <h2>Because Marks Matter — But Confidence Matters Too.</h2>
+        </div>
+
+        <div class="why-grid">
+          <div class="why-card">
+            <span>01</span>
+            <h3>Personal Attention</h3>
+            <p>Students get guidance based on their learning pace and needs.</p>
+          </div>
+
+          <div class="why-card">
+            <span>02</span>
+            <h3>Strong Foundations</h3>
+            <p>We focus on understanding concepts, not only memorising answers.</p>
+          </div>
+
+          <div class="why-card">
+            <span>03</span>
+            <h3>Smart Learning</h3>
+            <p>Regular practice, tests and revision make learning more effective.</p>
+          </div>
+
+          <div class="why-card">
+            <span>04</span>
+            <h3>Future-Ready Skills</h3>
+            <p>Students learn digital safety and responsible AI awareness.</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- FINAL CONTACT -->
+    <section class="final-section">
+      <div class="container final-card">
+        <span class="section-label">Admissions Open</span>
+        <h2>Give Your Child a Stronger Start.</h2>
+        <p>
+          Better learning. Better confidence. Better future.
+          Join Brainy Tuition Classes today.
+        </p>
+
+        <div class="final-contact">
+          Call / WhatsApp: <strong>8850831979</strong>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="container footer-content">
+      <div>
+        <h3>Brainy Tuition Classes</h3>
+        <p>SSC & ICSE Board · Std 5–9 · Computer Science Std 11–12</p>
+      </div>
+
+      <p>Learn Better. Think Smarter. Grow with Brainy.</p>
     </div>
-</section>
-    </main>
+  </footer>
 
-    <script src="js/firebase-config.js"></script>
-    <script src="js/script.js"></script>
 </body>
 </html>
